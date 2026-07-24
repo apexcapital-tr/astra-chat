@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Astra · APEX Capital</title>
+<style>
+  /* Palet, "APEX Capital Premium Theme" (Power BI .pbix) temasından alındı. */
+  :root{
+    --bg:#12261f;          /* sayfa arka planı (tema arka planından biraz daha koyu) */
+    --panel:#1F3D36;       /* ana panel arka planı (tema background) */
+    --card:#29473F;        /* header / input bar zemini */
+    --border:#5A756B;      /* tema border */
+    --bubble-user:#D89A18; /* tema tableAccent (gold) */
+    --bubble-user-text:#1F3D36;
+    --bubble-bot:#2F4E46;  /* tema dataColors[2] */
+    --text:#F8F8F8;        /* tema foreground */
+    --title:#F3E8C3;       /* tema title rengi */
+    --muted:#A9B89D;       /* tema dataColors[5] (sage) */
+    --accent:#D89A18;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Segoe UI',system-ui,sans-serif;
+    background:var(--bg); color:var(--text);
+    display:flex; justify-content:center; align-items:center; height:100vh;
+  }
+  .app{
+    width:560px; height:780px; background:var(--panel); border-radius:16px;
+    display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:0 10px 40px rgba(0,0,0,.5);
+    border:1px solid var(--border);
+    position:relative;
+  }
+  .msg-actions{margin-top:8px; display:flex; align-items:center; flex-wrap:wrap; gap:8px;}
+  .export-btn{
+    background:rgba(216,154,24,.10); border:1px solid var(--accent); color:var(--accent);
+    border-radius:20px; padding:7px 14px; font-size:12.5px; font-weight:600; cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px;
+    transition:background .15s ease, color .15s ease, transform .1s ease;
+  }
+  .export-btn:hover{background:var(--accent); color:var(--panel);}
+  .export-btn:active{transform:scale(.97);}
+  .export-btn:disabled{opacity:.5; cursor:not-allowed; background:rgba(216,154,24,.10); color:var(--accent); transform:none;}
+  .export-status{
+    display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600;
+    color:#8fe0c4; background:rgba(74,197,187,.14); border:1px solid rgba(74,197,187,.35);
+    border-radius:14px; padding:5px 12px;
+  }
+  .export-hint{
+    flex-basis:100%; font-size:13.5px; font-weight:700; color:#fca5a5;
+    background:rgba(220,38,38,.14); border:1px solid rgba(220,38,38,.4);
+    border-radius:10px; padding:8px 12px; margin-top:4px;
+  }
+  .modal-overlay{
+    position:absolute; inset:0; background:rgba(0,0,0,.55);
+    display:flex; align-items:center; justify-content:center; z-index:50;
+  }
+  .modal-card{
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:20px; width:300px;
+  }
+  .modal-card h3{margin:0 0 4px; color:var(--title); font-size:15px; font-family:'Segoe UI Semibold','Segoe UI',sans-serif;}
+  .modal-card p.hint{margin:0 0 12px; font-size:12px; color:var(--muted);}
+  .modal-card input{
+    width:100%; background:#0f221c; border:1px solid var(--border); color:var(--text);
+    border-radius:8px; padding:9px 11px; font-size:13px; margin-bottom:6px; outline:none;
+  }
+  .modal-card input:focus{border-color:var(--accent);}
+  .modal-error{font-size:12px; color:#fca5a5; margin-bottom:8px; min-height:14px;}
+  .modal-actions{display:flex; gap:8px; justify-content:flex-end;}
+  .modal-actions button{border-radius:8px; padding:8px 14px; cursor:pointer; font-size:13px; border:none;}
+  .modal-actions button.secondary{background:transparent; border:1px solid var(--border); color:var(--muted);}
+  .modal-actions button.primary{background:var(--accent); color:var(--panel); font-weight:700;}
+  .modal-actions button:disabled{opacity:.5; cursor:not-allowed;}
+  .header{
+    padding:16px 22px; background:var(--card); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:14px;
+  }
+  .header .logo{width:36px; height:36px; flex-shrink:0;}
+  .header .dot{width:9px;height:9px;border-radius:50%;background:#4AC5BB; box-shadow:0 0 6px #4AC5BB; margin-right:2px;}
+  .header .brand{font-family:'Segoe UI Semibold','Segoe UI',sans-serif; font-size:11px; letter-spacing:1.5px; color:var(--accent); margin:0; text-transform:uppercase; display:flex; align-items:center; gap:6px;}
+  .header h1{font-family:'Segoe UI Semibold','Segoe UI',sans-serif; font-size:19px; margin:2px 0 0; font-weight:600; color:var(--title);}
+  .header p{margin:2px 0 0; font-size:12px; color:var(--muted);}
+  .messages{
+    flex:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;
+  }
+  .msg{max-width:82%; padding:10px 14px; border-radius:14px; font-size:14px; line-height:1.45;}
+  .msg.user{
+    align-self:flex-end; background:var(--bubble-user); color:var(--bubble-user-text);
+    border-bottom-right-radius:4px; white-space:pre-wrap; font-weight:500;
+  }
+  .msg.bot{
+    align-self:flex-start; background:var(--bubble-bot); color:var(--text);
+    border-bottom-left-radius:4px; border:1px solid var(--border);
+  }
+  .msg.error{align-self:flex-start; background:#7d3231; color:#fde3e3; white-space:pre-wrap;}
+  .msg.bot p{margin:0 0 8px;}
+  .msg.bot p:last-child{margin-bottom:0;}
+  .msg.bot strong{color:var(--title);}
+  .msg.bot table{border-collapse:collapse; width:100%; margin:6px 0 10px; font-size:13px;}
+  .msg.bot th, .msg.bot td{border:1px solid var(--border); padding:5px 8px; text-align:left;}
+  .msg.bot th{background:#1a3830; color:var(--title); font-weight:600;}
+  .typing{align-self:flex-start; background:var(--bubble-bot); border:1px solid var(--border); padding:10px 14px; border-radius:14px; display:flex; gap:4px;}
+  .typing span{width:6px;height:6px;border-radius:50%;background:var(--muted); animation:blink 1.2s infinite;}
+  .typing span:nth-child(2){animation-delay:.2s;} .typing span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,80%,100%{opacity:.2;} 40%{opacity:1;}}
+  .inputbar{
+    display:flex; gap:8px; padding:12px; background:var(--card); border-top:1px solid var(--border);
+  }
+  .inputbar input{
+    flex:1; background:#0f221c; border:1px solid var(--border); color:var(--text);
+    border-radius:10px; padding:10px 12px; font-size:14px; outline:none;
+  }
+  .inputbar input::placeholder{color:var(--muted);}
+  .inputbar input:focus{border-color:var(--accent);}
+  .inputbar button{
+    background:var(--accent); border:none; color:#1F3D36; font-weight:700;
+    padding:0 16px; border-radius:10px; cursor:pointer; font-size:14px;
+  }
+  .inputbar button:hover{filter:brightness(1.08);}
+  .inputbar button:disabled{opacity:.5; cursor:not-allowed;}
+  .messages::-webkit-scrollbar{width:6px;}
+  .messages::-webkit-scrollbar-thumb{background:var(--border); border-radius:3px;}
+  .suggestions{display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 4px;}
+  .suggestion-chip{
+    background:transparent; border:1px solid var(--border); color:var(--muted);
+    border-radius:16px; padding:6px 13px; font-size:12.5px; cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .suggestion-chip:hover{border-color:var(--accent); color:var(--accent);}
+
+  /* ---- Arka plan animasyonu + giriş ekranı ---- */
+  html, body{overflow:hidden;}
+  #bgCanvas{position:fixed; inset:0; width:100%; height:100%; z-index:0; display:block;}
+
+  .app{position:relative; z-index:1; transition:opacity .5s ease;}
+  .app.hidden{opacity:0; pointer-events:none;}
+
+  .login-screen{
+    position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 50% 28%, rgba(41,71,63,.6), rgba(13,31,25,.94) 72%);
+    transition:opacity .55s ease, visibility .55s ease;
+  }
+  .login-screen.hidden{opacity:0; visibility:hidden; pointer-events:none;}
+
+  .login-card{
+    position:relative; width:340px; padding:40px 34px 30px; text-align:center;
+    background:rgba(31,61,54,.7); border:1px solid var(--border); border-radius:20px;
+    box-shadow:0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(216,154,24,.08) inset;
+    backdrop-filter:blur(7px);
+    animation:cardIn .7s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes cardIn{from{opacity:0; transform:translateY(20px) scale(.96);} to{opacity:1; transform:translateY(0) scale(1);}}
+
+  .login-ring-wrap{position:relative; width:92px; height:92px; margin:0 auto 18px;}
+  .login-ring{
+    position:absolute; inset:0; border-radius:50%;
+    background:conic-gradient(from 0deg, transparent 0deg, rgba(216,154,24,.95) 42deg, transparent 95deg, transparent 268deg, rgba(216,154,24,.5) 322deg, transparent 360deg);
+    animation:ringSpin 6s linear infinite;
+  }
+  .login-ring-wrap.unlocking .login-ring{animation-duration:.6s;}
+  .login-ring::after{content:''; position:absolute; inset:5px; border-radius:50%; background:var(--panel);}
+  .login-ring-wrap .logo{position:absolute; inset:0; width:42px; height:42px; margin:auto; z-index:2;}
+  @keyframes ringSpin{to{transform:rotate(360deg);}}
+
+  .login-brand{font-size:11px; letter-spacing:2.5px; color:var(--accent); text-transform:uppercase; font-weight:700; margin:0;}
+  .login-title{font-family:'Segoe UI Semibold','Segoe UI',sans-serif; font-size:23px; color:var(--title); margin:5px 0 6px;}
+  .login-sub{font-size:12.5px; color:var(--muted); margin:0 0 22px; line-height:1.5;}
+
+  .login-field{text-align:left; margin-bottom:13px;}
+  .login-field label{display:block; font-size:10.5px; color:var(--muted); letter-spacing:.5px; margin-bottom:5px; text-transform:uppercase;}
+  .login-field input{
+    width:100%; background:#0f221c; border:1px solid var(--border); color:var(--text);
+    border-radius:9px; padding:11px 13px; font-size:14px; outline:none; transition:border-color .2s, box-shadow .2s;
+  }
+  .login-field input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(216,154,24,.15);}
+
+  .login-btn{
+    position:relative; overflow:hidden; width:100%; margin-top:6px;
+    background:var(--accent); border:none; color:var(--panel); font-weight:700; font-size:14.5px;
+    padding:12px; border-radius:10px; cursor:pointer; letter-spacing:.3px;
+  }
+  .login-btn:hover{filter:brightness(1.07);}
+  .login-btn:disabled{opacity:.75; cursor:default;}
+  .login-btn::after{
+    content:''; position:absolute; top:0; left:-60%; width:40%; height:100%;
+    background:linear-gradient(115deg, transparent, rgba(255,255,255,.55), transparent);
+    transform:skewX(-20deg); animation:shimmer 3.2s ease-in-out infinite;
+  }
+  @keyframes shimmer{0%{left:-60%;} 45%{left:130%;} 100%{left:130%;}}
+
+  .login-foot{margin-top:18px; font-size:10.5px; letter-spacing:1.5px; color:var(--accent); opacity:.65;}
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-ring-wrap" id="ringWrap">
+      <div class="login-ring"></div>
+      <svg class="logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="apexGoldLogin" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#F3E8C3"/>
+            <stop offset="1" stop-color="#D89A18"/>
+          </linearGradient>
+        </defs>
+        <polygon points="32,6 58,54 6,54" fill="none" stroke="url(#apexGoldLogin)" stroke-width="5" stroke-linejoin="round"/>
+        <polygon points="32,26 45,54 19,54" fill="url(#apexGoldLogin)"/>
+      </svg>
+    </div>
+    <p class="login-brand">Apex Capital</p>
+    <h1 class="login-title">Güvenli Erişim</h1>
+    <p class="login-sub">Astra'ya bağlanmak için size özel<br>gönderilen bilgilerle giriş yapın.</p>
+
+    <form id="loginForm">
+      <div class="login-field">
+        <label for="loginUser">Kullanıcı Adı</label>
+        <input type="text" id="loginUser" autocomplete="username" required>
+      </div>
+      <div class="login-field">
+        <label for="loginPass">Şifre</label>
+        <input type="password" id="loginPass" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">Giriş Yap</button>
+    </form>
+    <p class="login-foot">THE PINNACLE OF BANKING</p>
+  </div>
+</div>
+
+<div class="app hidden" id="appRoot">
+  <div class="header">
+    <svg class="logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="apexGold" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#F3E8C3"/>
+          <stop offset="1" stop-color="#D89A18"/>
+        </linearGradient>
+      </defs>
+      <polygon points="32,6 58,54 6,54" fill="none" stroke="url(#apexGold)" stroke-width="5" stroke-linejoin="round"/>
+      <polygon points="32,26 45,54 19,54" fill="url(#apexGold)"/>
+    </svg>
+    <div>
+      <p class="brand"><span class="dot" id="statusDot"></span>APEX Capital</p>
+      <h1>Astra</h1>
+    </div>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="msg bot">Merhaba, ben Astra. APEX Capital'in kredi asistanıyım — kredilerle ilgili sorularını yanıtlamak için buradayım. Nasıl yardımcı olabilirim?</div>
+    <div class="suggestions" id="suggestions">
+      <button class="suggestion-chip" type="button">Ortalama kredi tutarı ne?</button>
+      <button class="suggestion-chip" type="button">Eğitim seviyesine göre onay oranı nasıl?</button>
+      <button class="suggestion-chip" type="button">Yıllara göre başvuru sayısı nasıl değişti?</button>
+      <button class="suggestion-chip" type="button">En yüksek kredi skoru kaç?</button>
+    </div>
+  </div>
+
+  <div class="inputbar">
+    <input id="input" type="text" placeholder="Örn: ortalama kredi tutarı ne?" autocomplete="off">
+    <button id="sendBtn">Gönder</button>
+  </div>
+</div>
+
+<script>
+  // --- AYAR: n8n webhook URL'i buraya ---
+  // Test URL (n8n'de "Execute workflow"a basıp dinlemeye almak gerekir):
+  // const WEBHOOK_URL = "http://localhost:5678/webhook-test/loan-agent";
+  // Production URL (workflow Publish edildiğinde, sürekli dinler):
+  const WEBHOOK_URL = "https://henna-idly-aviator.ngrok-free.dev/webhook/loan-agent";
+
+  // Excel + mail gönderme için AYRI bir webhook (ikinci n8n workflow'u).
+  // Test aşamasında "-test" URL'i kullan, Publish edince alttakine geç.
+  // const EXCEL_WEBHOOK_URL = "http://localhost:5678/webhook-test/loan-agent-excel";
+  const EXCEL_WEBHOOK_URL = "https://henna-idly-aviator.ngrok-free.dev/webhook/loan-agent-excel";
+
+  // Bu sekmenin konuşmasını n8n Memory node'unda ayrı tutmak için sabit bir kimlik.
+  // Sayfa yenilenince (F5) yeni bir sohbet başlar, hafıza sıfırlanır — bu normal.
+  const SESSION_ID = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+
+  // Son kullanılan e-posta adresi (sadece kolaylık için, sekme kapanınca kaybolur).
+  let lastEmail = '';
+
+  const messagesEl = document.getElementById('messages');
+  const inputEl = document.getElementById('input');
+  const sendBtn = document.getElementById('sendBtn');
+
+  function escapeHtml(str){
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function inlineFormat(str){
+    str = str.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    str = str.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+    return str;
+  }
+
+  // Basit markdown -> HTML: **bold**, *italic*, satır başı "|" tabloları, paragraflar.
+  function renderMarkdown(raw){
+    const escaped = escapeHtml(raw);
+    const lines = escaped.split('\n');
+    let html = '';
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i];
+
+      if (line.trim().startsWith('|')) {
+        const tableLines = [];
+        while (i < lines.length && lines[i].trim().startsWith('|')) {
+          tableLines.push(lines[i].trim());
+          i++;
+        }
+        const rows = tableLines
+          .filter(l => !/^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?$/.test(l))
+          .map(l => l.replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim()));
+
+        if (rows.length) {
+          html += '<table><thead><tr>';
+          rows[0].forEach(cell => html += `<th>${inlineFormat(cell)}</th>`);
+          html += '</tr></thead><tbody>';
+          for (let r = 1; r < rows.length; r++) {
+            html += '<tr>';
+            rows[r].forEach(cell => html += `<td>${inlineFormat(cell)}</td>`);
+            html += '</tr>';
+          }
+          html += '</tbody></table>';
+        }
+        continue;
+      }
+
+      if (line.trim() === '') { i++; continue; }
+
+      const paraLines = [];
+      while (i < lines.length && lines[i].trim() !== '' && !lines[i].trim().startsWith('|')) {
+        paraLines.push(lines[i]);
+        i++;
+      }
+      html += `<p>${inlineFormat(paraLines.join('<br>'))}</p>`;
+    }
+
+    return html || escaped;
+  }
+
+  function addMessage(text, cls, soruForExport){
+    const div = document.createElement('div');
+    div.className = 'msg ' + cls;
+    if (cls === 'bot') {
+      div.innerHTML = renderMarkdown(text);
+    } else {
+      div.textContent = text;
+    }
+    messagesEl.appendChild(div);
+
+    // Bot cevaplarının altına "Excel & Mail Gönder" butonu ekle (sadece gerçek
+    // bir soru-cevap ise; ilk karşılama mesajında soruForExport verilmiyor).
+    if (cls === 'bot' && soruForExport) {
+      const actions = document.createElement('div');
+      actions.className = 'msg-actions';
+      const btn = document.createElement('button');
+      btn.className = 'export-btn';
+      btn.textContent = '📊 Excel & Mail Gönder';
+      btn.addEventListener('click', () => openMailModal(soruForExport, btn));
+      actions.appendChild(btn);
+      div.after(actions);
+    }
+
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return div;
+  }
+
+  function openMailModal(soru, triggerBtn){
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-card">
+        <h3>Excel & Mail Gönder</h3>
+        <p class="hint">Bu sorunun sonucu Excel olarak hazırlanıp yazdığın adres(ler)e gönderilecek. Birden fazla kişiye göndermek için virgülle ayır.</p>
+        <input type="text" id="mailInput" placeholder="apexcapitalda@gmail.com, others" value="${lastEmail}">
+        <div class="modal-error" id="mailError"></div>
+        <div class="modal-actions">
+          <button class="secondary" id="mailCancel">Vazgeç</button>
+          <button class="primary" id="mailSend">Gönder</button>
+        </div>
+      </div>`;
+    document.querySelector('.app').appendChild(overlay);
+
+    const input = overlay.querySelector('#mailInput');
+    const errorEl = overlay.querySelector('#mailError');
+    const sendBtnM = overlay.querySelector('#mailSend');
+    const cancelBtnM = overlay.querySelector('#mailCancel');
+
+    input.focus();
+    const close = () => overlay.remove();
+    cancelBtnM.addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+    sendBtnM.addEventListener('click', async () => {
+      const raw = input.value.trim();
+      const addresses = raw.split(',').map(a => a.trim()).filter(a => a.length > 0);
+
+      if (addresses.length === 0) {
+        errorEl.textContent = 'En az bir e-posta adresi yaz.';
+        return;
+      }
+      const invalid = addresses.find(a => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a));
+      if (invalid) {
+        errorEl.textContent = `"${invalid}" geçerli bir e-posta adresine benzemiyor.`;
+        return;
+      }
+
+      const email = addresses.join(', ');
+      errorEl.textContent = '';
+      sendBtnM.disabled = true;
+      cancelBtnM.disabled = true;
+      sendBtnM.textContent = 'Gönderiliyor...';
+
+      try {
+        const res = await fetch(EXCEL_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ soru, alici_mail: email })
+        });
+
+        if (!res.ok) {
+          errorEl.textContent = `Sunucu hatası (${res.status}). Workflow Publish edilmiş mi?`;
+          sendBtnM.disabled = false;
+          cancelBtnM.disabled = false;
+          sendBtnM.textContent = 'Gönder';
+          return;
+        }
+
+        lastEmail = email;
+        close();
+        const status = document.createElement('span');
+        status.className = 'export-status';
+        status.textContent = addresses.length > 1
+          ? `✅ ${addresses.length} adrese gönderildi`
+          : `✅ ${email} adresine gönderildi`;
+        status.title = email;
+
+        const hint = document.createElement('span');
+        hint.className = 'export-hint';
+        hint.textContent = '⚠️ Mailinizin spam kutusunu kontrol etmeyi unutmayın.';
+        triggerBtn.after(status);
+        status.after(hint);
+        triggerBtn.disabled = true;
+
+      } catch (err) {
+        errorEl.textContent = 'Bağlantı hatası: n8n çalışıyor mu, kontrol et.';
+        sendBtnM.disabled = false;
+        cancelBtnM.disabled = false;
+        sendBtnM.textContent = 'Gönder';
+      }
+    });
+  }
+
+  function showTyping(){
+    const div = document.createElement('div');
+    div.className = 'typing';
+    div.id = 'typingIndicator';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function hideTyping(){
+    const el = document.getElementById('typingIndicator');
+    if (el) el.remove();
+  }
+
+  function extractAnswer(data){
+    if (typeof data === 'string') return data;
+    if (data == null) return null;
+    if (typeof data.output === 'string') return data.output;
+    if (typeof data.text === 'string') return data.text;
+    if (typeof data.answer === 'string') return data.answer;
+    if (Array.isArray(data) && data[0]) return extractAnswer(data[0]);
+    if (data.json) return extractAnswer(data.json);
+    return JSON.stringify(data);
+  }
+
+  async function sendMessage(){
+    const soru = inputEl.value.trim();
+    if (!soru) return;
+
+    addMessage(soru, 'user');
+    inputEl.value = '';
+    sendBtn.disabled = true;
+    showTyping();
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ soru, sessionId: SESSION_ID })
+      });
+
+      hideTyping();
+
+      if (!res.ok) {
+        addMessage(`Sunucu hatası (${res.status}). n8n workflow'unun Publish edildiğinden emin ol.`, 'error');
+        return;
+      }
+
+      let data;
+      const raw = await res.text();
+      try { data = JSON.parse(raw); } catch { data = raw; }
+
+      const answer = extractAnswer(data);
+      addMessage(answer || 'Yanıt alınamadı (boş cevap).', 'bot', soru);
+
+    } catch (err) {
+      hideTyping();
+      addMessage('Bağlantı hatası: n8n çalışıyor mu ve webhook dinlemede mi kontrol et.', 'error');
+    } finally {
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  // Önerilen soru çipleri: tıklanınca o soruyu gönder, çip satırını kaldır.
+  const suggestionsEl = document.getElementById('suggestions');
+  if (suggestionsEl) {
+    suggestionsEl.querySelectorAll('.suggestion-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        inputEl.value = chip.textContent;
+        suggestionsEl.remove();
+        sendMessage();
+      });
+    });
+  }
+
+  // --- Giriş ekranı ---
+  // Not: Bu görsel bir "şov" — girilen kullanıcı adı/şifre sunucuda doğrulanmıyor.
+  // Amaç, mail ile gönderilen kişiye özel his verip profesyonel bir deneyim sunmak.
+  const loginScreen = document.getElementById('loginScreen');
+  const loginForm = document.getElementById('loginForm');
+  const appRoot = document.getElementById('appRoot');
+  const ringWrap = document.getElementById('ringWrap');
+  const loginBtn = document.getElementById('loginBtn');
+
+  loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    ringWrap.classList.add('unlocking');
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Doğrulanıyor...';
+    setTimeout(() => {
+      loginScreen.classList.add('hidden');
+      appRoot.classList.remove('hidden');
+      inputEl.focus();
+    }, 650);
+  });
+
+  // --- Arka plan animasyonu: yavaşça yükselen altın/adaçayı parçacıkları ---
+  (function () {
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+    let w, h, particles;
+
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+
+    function initParticles() {
+      particles = Array.from({ length: 60 }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 1.6 + 0.4,
+        s: Math.random() * 0.35 + 0.08,
+        o: Math.random() * 0.5 + 0.15,
+        gold: Math.random() > 0.55,
+      }));
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    initParticles();
+
+    function draw() {
+      ctx.fillStyle = '#0d1f19';
+      ctx.fillRect(0, 0, w, h);
+      particles.forEach((p) => {
+        p.y -= p.s;
+        if (p.y < -5) { p.y = h + 5; p.x = Math.random() * w; }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.gold
+          ? `rgba(216,154,24,${p.o})`
+          : `rgba(169,184,157,${p.o * 0.6})`;
+        ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+</script>
+
+</body>
+</html>
