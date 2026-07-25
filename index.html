@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Astra · APEX Capital</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   /* Palet, "APEX Capital Premium Theme" (Power BI .pbix) temasından alındı. */
   :root{
@@ -100,6 +101,15 @@
   .msg.bot table{border-collapse:collapse; width:100%; margin:6px 0 10px; font-size:13px;}
   .msg.bot th, .msg.bot td{border:1px solid var(--border); padding:5px 8px; text-align:left;}
   .msg.bot th{background:#1a3830; color:var(--title); font-weight:600;}
+  .msg.bot canvas.auto-chart{width:100% !important; height:230px !important; margin:10px 0 2px;}
+  .chart-type-switch{display:flex; gap:6px; margin:2px 0 4px; flex-wrap:wrap;}
+  .chart-type-btn{
+    background:transparent; border:1px solid var(--border); color:var(--muted);
+    border-radius:12px; padding:3px 11px; font-size:11px; cursor:pointer;
+    transition:border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .chart-type-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .chart-type-btn.active{background:var(--accent); color:var(--panel); border-color:var(--accent); font-weight:600;}
   .typing{align-self:flex-start; background:var(--bubble-bot); border:1px solid var(--border); padding:10px 14px; border-radius:14px; display:flex; gap:4px;}
   .typing span{width:6px;height:6px;border-radius:50%;background:var(--muted); animation:blink 1.2s infinite;}
   .typing span:nth-child(2){animation-delay:.2s;} .typing span:nth-child(3){animation-delay:.4s;}
@@ -283,6 +293,61 @@
   // Son kullanılan e-posta adresi (sadece kolaylık için, sekme kapanınca kaybolur).
   let lastEmail = '';
 
+  // 2 kolonlu sayısal tablolardan otomatik grafik üretmek için biriktirilen veriler.
+  const pendingCharts = [];
+  const chartInstances = {};
+  const CHART_PALETTE = ['#D89A18', '#4AC5BB', '#A9B89D', '#8fa998', '#c96a4e', '#7fb3a3', '#e0b84a', '#5A756B'];
+
+  function parseNumericCell(cell){
+    const temiz = cell.replace(/\*\*/g, '').replace(/\$|%|,|\s/g, '').trim();
+    if (temiz === '' || temiz.toLowerCase() === 'nan') return null;
+    const sayi = parseFloat(temiz);
+    return isNaN(sayi) ? null : sayi;
+  }
+
+  function buildChartConfig(cfg, type){
+    const dilimli = type === 'pie' || type === 'doughnut';
+    return {
+      type,
+      data: {
+        labels: cfg.labels,
+        datasets: [{
+          label: cfg.title || '',
+          data: cfg.values,
+          backgroundColor: dilimli
+            ? cfg.labels.map((_, i) => CHART_PALETTE[i % CHART_PALETTE.length])
+            : 'rgba(216,154,24,0.55)',
+          borderColor: dilimli ? '#12261f' : '#D89A18',
+          borderWidth: dilimli ? 2 : (type === 'line' ? 2 : 1),
+          borderRadius: type === 'bar' ? 4 : 0,
+          fill: type === 'line' ? false : true,
+          tension: type === 'line' ? 0.25 : 0,
+          pointBackgroundColor: '#D89A18',
+        }],
+      },
+      options: {
+        indexAxis: type === 'bar' ? 'y' : 'x',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: dilimli, position: 'bottom', labels: { color: '#F8F8F8', font: { size: 11 } } },
+          title: { display: !!cfg.title, text: cfg.title, color: '#F3E8C3', font: { size: 12 } },
+        },
+        scales: dilimli ? {} : {
+          x: { ticks: { color: '#F8F8F8', font: { size: 11, weight: '600' } }, grid: { color: 'rgba(90,117,107,0.25)' } },
+          y: { ticks: { color: '#F8F8F8', font: { size: 11, weight: '600' } }, grid: { color: 'rgba(90,117,107,0.25)' } },
+        },
+      },
+    };
+  }
+
+  function drawChart(canvas, chartId, type){
+    const cfg = pendingCharts[chartId];
+    if (!cfg || typeof Chart === 'undefined') return;
+    if (chartInstances[chartId]) chartInstances[chartId].destroy();
+    chartInstances[chartId] = new Chart(canvas, buildChartConfig(cfg, type));
+  }
+
   const messagesEl = document.getElementById('messages');
   const inputEl = document.getElementById('input');
   const sendBtn = document.getElementById('sendBtn');
@@ -330,6 +395,30 @@
             html += '</tr>';
           }
           html += '</tbody></table>';
+
+          // 2 kolonlu ve tüm ikinci kolon değerleri sayısalsa, altına otomatik grafik ekle.
+          if (rows[0].length === 2 && rows.length >= 3) {
+            const labels = [];
+            const values = [];
+            let hepsiSayisal = true;
+            for (let r = 1; r < rows.length; r++) {
+              const num = parseNumericCell(rows[r][1]);
+              if (num === null) { hepsiSayisal = false; break; }
+              labels.push(rows[r][0].replace(/\*\*/g, ''));
+              values.push(num);
+            }
+            if (hepsiSayisal && labels.length >= 2) {
+              const chartId = pendingCharts.length;
+              pendingCharts.push({ labels, values, title: rows[0][1].replace(/\*\*/g, '') });
+              html += `<canvas class="auto-chart" data-chart-id="${chartId}" height="230"></canvas>`;
+              html += `<div class="chart-type-switch" data-chart-id="${chartId}">
+                <button class="chart-type-btn active" data-type="bar">Çubuk</button>
+                <button class="chart-type-btn" data-type="line">Çizgi</button>
+                <button class="chart-type-btn" data-type="pie">Pasta</button>
+                <button class="chart-type-btn" data-type="doughnut">Halka</button>
+              </div>`;
+            }
+          }
         }
         continue;
       }
@@ -356,6 +445,24 @@
       div.textContent = text;
     }
     messagesEl.appendChild(div);
+
+    // Bot mesajında otomatik grafik canvas'ı varsa çiz, tür değiştirme butonlarını bağla.
+    if (cls === 'bot') {
+      div.querySelectorAll('.auto-chart').forEach((canvas) => {
+        drawChart(canvas, Number(canvas.dataset.chartId), 'bar');
+      });
+      div.querySelectorAll('.chart-type-switch').forEach((switchEl) => {
+        const chartId = Number(switchEl.dataset.chartId);
+        switchEl.querySelectorAll('.chart-type-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            switchEl.querySelectorAll('.chart-type-btn').forEach((b) => b.classList.remove('active'));
+            btn.classList.add('active');
+            const canvas = div.querySelector(`canvas.auto-chart[data-chart-id="${chartId}"]`);
+            if (canvas) drawChart(canvas, chartId, btn.dataset.type);
+          });
+        });
+      });
+    }
 
     // Bot cevaplarının altına "Excel & Mail Gönder" butonu ekle (sadece gerçek
     // bir soru-cevap ise; ilk karşılama mesajında soruForExport verilmiyor).
