@@ -86,6 +86,7 @@
     flex:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;
   }
   .msg{max-width:82%; padding:10px 14px; border-radius:14px; font-size:14px; line-height:1.45;}
+  .msg.bot:has(canvas.auto-chart){max-width:96%;}
   .msg.user{
     align-self:flex-end; background:var(--bubble-user); color:var(--bubble-user-text);
     border-bottom-right-radius:4px; white-space:pre-wrap; font-weight:500;
@@ -101,7 +102,7 @@
   .msg.bot table{border-collapse:collapse; width:100%; margin:6px 0 10px; font-size:13px;}
   .msg.bot th, .msg.bot td{border:1px solid var(--border); padding:5px 8px; text-align:left;}
   .msg.bot th{background:#1a3830; color:var(--title); font-weight:600;}
-  .msg.bot canvas.auto-chart{width:100% !important; height:230px !important; margin:10px 0 2px;}
+  .msg.bot canvas.auto-chart{width:100% !important; height:280px !important; margin:10px 0 2px;}
   .chart-type-switch{display:flex; gap:6px; margin:2px 0 4px; flex-wrap:wrap;}
   .chart-type-btn{
     background:transparent; border:1px solid var(--border); color:var(--muted);
@@ -330,12 +331,12 @@
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: dilimli, position: 'bottom', labels: { color: '#F8F8F8', font: { size: 11 } } },
-          title: { display: !!cfg.title, text: cfg.title, color: '#F3E8C3', font: { size: 12 } },
+          legend: { display: dilimli, position: 'bottom', labels: { color: '#F8F8F8', font: { size: 14 } } },
+          title: { display: !!cfg.title, text: cfg.title, color: '#F3E8C3', font: { size: 15, weight: '700' } },
         },
         scales: dilimli ? {} : {
-          x: { ticks: { color: '#F8F8F8', font: { size: 11, weight: '600' } }, grid: { color: 'rgba(90,117,107,0.25)' } },
-          y: { ticks: { color: '#F8F8F8', font: { size: 11, weight: '600' } }, grid: { color: 'rgba(90,117,107,0.25)' } },
+          x: { ticks: { color: '#F8F8F8', font: { size: 15, weight: '700' } }, grid: { color: 'rgba(90,117,107,0.25)' } },
+          y: { ticks: { color: '#F8F8F8', font: { size: 15, weight: '700' } }, grid: { color: 'rgba(90,117,107,0.25)' } },
         },
       },
     };
@@ -404,13 +405,13 @@
             for (let r = 1; r < rows.length; r++) {
               const num = parseNumericCell(rows[r][1]);
               if (num === null) { hepsiSayisal = false; break; }
-              labels.push(rows[r][0].replace(/\*\*/g, ''));
+              labels.push(rows[r][0].replace(/\*\*/g, '').replace(/[^\p{L}\p{N}\s.,/()%-]/gu, '').trim());
               values.push(num);
             }
             if (hepsiSayisal && labels.length >= 2) {
               const chartId = pendingCharts.length;
               pendingCharts.push({ labels, values, title: rows[0][1].replace(/\*\*/g, '') });
-              html += `<canvas class="auto-chart" data-chart-id="${chartId}" height="230"></canvas>`;
+              html += `<canvas class="auto-chart" data-chart-id="${chartId}" height="280"></canvas>`;
               html += `<div class="chart-type-switch" data-chart-id="${chartId}">
                 <button class="chart-type-btn active" data-type="bar">Çubuk</button>
                 <button class="chart-type-btn" data-type="line">Çizgi</button>
