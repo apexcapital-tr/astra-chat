@@ -286,8 +286,8 @@
     <p class="login-sub">Kredi başvuru işlemleriniz için<br>giriş yapın.</p>
     <form id="customerForm">
       <div class="login-field">
-        <label for="custUser">Kullanıcı Adı</label>
-        <input type="text" id="custUser" autocomplete="username" required>
+        <label for="custUser">TC Kimlik No</label>
+        <input type="text" id="custUser" inputmode="numeric" maxlength="11" pattern="[0-9]{11}" placeholder="11 haneli TC Kimlik No" autocomplete="off" required>
       </div>
       <div class="login-field">
         <label for="custPass">Şifre</label>
