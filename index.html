@@ -153,6 +153,7 @@
     transition:opacity .55s ease, visibility .55s ease;
   }
   .login-screen.hidden{opacity:0; visibility:hidden; pointer-events:none;}
+  .login-card.hidden{display:none;}
 
   .login-card{
     position:relative; width:340px; padding:40px 34px 30px; text-align:center;
@@ -227,8 +228,8 @@
     <p class="login-brand">Apex Capital</p>
     <h1 class="login-title">Güvenli Erişim</h1>
     <p class="login-sub">Giriş türünüzü seçin.</p>
-    <button type="button" class="login-btn" id="roleAdminBtn">Yönetici Girişi</button>
-    <button type="button" class="login-btn" id="roleCustomerBtn" style="background:transparent; border:1px solid var(--border); color:var(--text); margin-top:10px;">Müşteri Girişi</button>
+    <button type="button" class="login-btn" id="roleAdminBtn">🛡️ Yönetici Girişi</button>
+    <button type="button" class="login-btn" id="roleCustomerBtn" style="background:transparent; border:1px solid var(--border); color:var(--text); margin-top:10px;">👤 Müşteri Girişi</button>
     <p class="login-foot">THE PINNACLE OF BANKING</p>
   </div>
 
@@ -242,7 +243,7 @@
       </svg>
     </div>
     <p class="login-brand">Apex Capital</p>
-    <h1 class="login-title">Yönetici Girişi</h1>
+    <h1 class="login-title">🛡️ Yönetici Girişi</h1>
     <p class="login-sub">Size özel tanımlanan kullanıcı adı<br>ve şifre ile giriş yapın.</p>
     <form id="adminForm">
       <div class="login-field">
@@ -269,7 +270,7 @@
       </svg>
     </div>
     <p class="login-brand">Apex Capital</p>
-    <h1 class="login-title">Müşteri Girişi</h1>
+    <h1 class="login-title">👤 Müşteri Girişi</h1>
     <p class="login-sub">Kredi başvuru işlemleriniz için<br>giriş yapın.</p>
     <form id="customerForm">
       <div class="login-field">
