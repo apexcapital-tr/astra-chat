@@ -208,36 +208,98 @@
 <canvas id="bgCanvas"></canvas>
 
 <div class="login-screen" id="loginScreen">
-  <div class="login-card">
-    <div class="login-ring-wrap" id="ringWrap">
+
+  <!-- Rol seçimi: ilk ekran -->
+  <div class="login-card" id="roleCard">
+    <div class="login-ring-wrap" id="ringWrapRole">
       <div class="login-ring"></div>
       <svg class="logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="apexGoldLogin" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id="apexGoldRole" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stop-color="#F3E8C3"/>
             <stop offset="1" stop-color="#D89A18"/>
           </linearGradient>
         </defs>
-        <polygon points="32,6 58,54 6,54" fill="none" stroke="url(#apexGoldLogin)" stroke-width="5" stroke-linejoin="round"/>
-        <polygon points="32,26 45,54 19,54" fill="url(#apexGoldLogin)"/>
+        <polygon points="32,6 58,54 6,54" fill="none" stroke="url(#apexGoldRole)" stroke-width="5" stroke-linejoin="round"/>
+        <polygon points="32,26 45,54 19,54" fill="url(#apexGoldRole)"/>
       </svg>
     </div>
     <p class="login-brand">Apex Capital</p>
     <h1 class="login-title">Güvenli Erişim</h1>
-    <p class="login-sub">Astra'ya bağlanmak için size özel<br>gönderilen bilgilerle giriş yapın.</p>
-
-    <form id="loginForm">
-      <div class="login-field">
-        <label for="loginUser">Kullanıcı Adı</label>
-        <input type="text" id="loginUser" autocomplete="username" required>
-      </div>
-      <div class="login-field">
-        <label for="loginPass">Şifre</label>
-        <input type="password" id="loginPass" autocomplete="current-password" required>
-      </div>
-      <button type="submit" class="login-btn" id="loginBtn">Giriş Yap</button>
-    </form>
+    <p class="login-sub">Giriş türünüzü seçin.</p>
+    <button type="button" class="login-btn" id="roleAdminBtn">Yönetici Girişi</button>
+    <button type="button" class="login-btn" id="roleCustomerBtn" style="background:transparent; border:1px solid var(--border); color:var(--text); margin-top:10px;">Müşteri Girişi</button>
     <p class="login-foot">THE PINNACLE OF BANKING</p>
+  </div>
+
+  <!-- Yönetici girişi: FastAPI'ye karşı gerçek doğrulama -->
+  <div class="login-card hidden" id="adminCard">
+    <div class="login-ring-wrap" id="ringWrapAdmin">
+      <div class="login-ring"></div>
+      <svg class="logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="32,6 58,54 6,54" fill="none" stroke="url(#apexGoldRole)" stroke-width="5" stroke-linejoin="round"/>
+        <polygon points="32,26 45,54 19,54" fill="url(#apexGoldRole)"/>
+      </svg>
+    </div>
+    <p class="login-brand">Apex Capital</p>
+    <h1 class="login-title">Yönetici Girişi</h1>
+    <p class="login-sub">Size özel tanımlanan kullanıcı adı<br>ve şifre ile giriş yapın.</p>
+    <form id="adminForm">
+      <div class="login-field">
+        <label for="adminUser">Kullanıcı Adı</label>
+        <input type="text" id="adminUser" autocomplete="username" required>
+      </div>
+      <div class="login-field">
+        <label for="adminPass">Şifre</label>
+        <input type="password" id="adminPass" autocomplete="current-password" required>
+      </div>
+      <p id="adminError" style="display:none; color:#e07a6a; font-size:12px; margin:-4px 0 12px; text-align:left;">Kullanıcı adı veya şifre hatalı.</p>
+      <button type="submit" class="login-btn" id="adminBtn">Giriş Yap</button>
+    </form>
+    <p class="login-foot" id="adminBackBtn" style="cursor:pointer;">‹ GERİ DÖN</p>
+  </div>
+
+  <!-- Müşteri girişi: görsel amaçlı, sunucuda doğrulama yok -->
+  <div class="login-card hidden" id="customerCard">
+    <div class="login-ring-wrap" id="ringWrapCustomer">
+      <div class="login-ring"></div>
+      <svg class="logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="32,6 58,54 6,54" fill="none" stroke="url(#apexGoldRole)" stroke-width="5" stroke-linejoin="round"/>
+        <polygon points="32,26 45,54 19,54" fill="url(#apexGoldRole)"/>
+      </svg>
+    </div>
+    <p class="login-brand">Apex Capital</p>
+    <h1 class="login-title">Müşteri Girişi</h1>
+    <p class="login-sub">Kredi başvuru işlemleriniz için<br>giriş yapın.</p>
+    <form id="customerForm">
+      <div class="login-field">
+        <label for="custUser">Kullanıcı Adı</label>
+        <input type="text" id="custUser" autocomplete="username" required>
+      </div>
+      <div class="login-field">
+        <label for="custPass">Şifre</label>
+        <input type="password" id="custPass" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="login-btn" id="customerBtn">Giriş Yap</button>
+    </form>
+    <p class="login-foot" id="customerBackBtn" style="cursor:pointer;">‹ GERİ DÖN</p>
+  </div>
+</div>
+
+<!-- Müşteri paneli: sadece kredi başvuru akışı, veri sorgu araçlarına erişimi yok -->
+<div class="app hidden" id="customerRoot">
+  <div class="header">
+    <svg class="logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="32,6 58,54 6,54" fill="none" stroke="url(#apexGold)" stroke-width="5" stroke-linejoin="round"/>
+      <polygon points="32,26 45,54 19,54" fill="url(#apexGold)"/>
+    </svg>
+    <div>
+      <p class="brand"><span class="dot" id="statusDotCustomer"></span>APEX Capital</p>
+      <h1>Kredi Başvurusu</h1>
+    </div>
+  </div>
+  <div class="messages">
+    <div class="msg bot">Kredi başvuru modülümüz şu anda hazırlanıyor. Modelimiz tamamlandığında buradan başvurunuzu yapabilecek, sonucu ve gerekli belge onaylarını anında görebileceksiniz.</div>
   </div>
 </div>
 
@@ -321,6 +383,8 @@
           borderColor: dilimli ? '#12261f' : '#D89A18',
           borderWidth: dilimli ? 2 : (type === 'line' ? 2 : 1),
           borderRadius: type === 'bar' ? 4 : 0,
+          categoryPercentage: type === 'bar' ? 0.7 : 1,
+          barPercentage: type === 'bar' ? 0.85 : 1,
           fill: type === 'line' ? false : true,
           tension: type === 'line' ? 0.25 : 0,
           pointBackgroundColor: '#D89A18',
@@ -335,8 +399,8 @@
           title: { display: !!cfg.title, text: cfg.title, color: '#F3E8C3', font: { size: 15, weight: '700' } },
         },
         scales: dilimli ? {} : {
-          x: { ticks: { color: '#F8F8F8', font: { size: 15, weight: '700' } }, grid: { color: 'rgba(90,117,107,0.25)' } },
-          y: { ticks: { color: '#F8F8F8', font: { size: 15, weight: '700' } }, grid: { color: 'rgba(90,117,107,0.25)' } },
+          x: { ticks: { color: '#F8F8F8', font: { size: 16, weight: '700' } }, grid: { color: 'rgba(90,117,107,0.18)' } },
+          y: { ticks: { color: '#F8F8F8', font: { size: 16, weight: '700' } }, grid: { display: false } },
         },
       },
     };
@@ -650,23 +714,82 @@
   }
 
   // --- Giriş ekranı ---
-  // Not: Bu görsel bir "şov" — girilen kullanıcı adı/şifre sunucuda doğrulanmıyor.
-  // Amaç, mail ile gönderilen kişiye özel his verip profesyonel bir deneyim sunmak.
-  const loginScreen = document.getElementById('loginScreen');
-  const loginForm = document.getElementById('loginForm');
-  const appRoot = document.getElementById('appRoot');
-  const ringWrap = document.getElementById('ringWrap');
-  const loginBtn = document.getElementById('loginBtn');
+  // Yönetici: FastAPI'ye /admin_login ile gerçek doğrulama yapılır.
+  // Müşteri: görsel bir "şov" — girilen bilgi sunucuda doğrulanmaz, veri araçlarına erişimi yoktur.
+  const FASTAPI_BASE_URL = "https://loan-agent-api.onrender.com";
 
-  loginForm.addEventListener('submit', (e) => {
+  const loginScreen = document.getElementById('loginScreen');
+  const roleCard = document.getElementById('roleCard');
+  const adminCard = document.getElementById('adminCard');
+  const customerCard = document.getElementById('customerCard');
+  const appRoot = document.getElementById('appRoot');
+  const customerRoot = document.getElementById('customerRoot');
+
+  function gosterKart(kart) {
+    [roleCard, adminCard, customerCard].forEach(k => k.classList.add('hidden'));
+    kart.classList.remove('hidden');
+  }
+
+  document.getElementById('roleAdminBtn').addEventListener('click', () => gosterKart(adminCard));
+  document.getElementById('roleCustomerBtn').addEventListener('click', () => gosterKart(customerCard));
+  document.getElementById('adminBackBtn').addEventListener('click', () => gosterKart(roleCard));
+  document.getElementById('customerBackBtn').addEventListener('click', () => gosterKart(roleCard));
+
+  // Yönetici girişi
+  const adminForm = document.getElementById('adminForm');
+  const adminBtn = document.getElementById('adminBtn');
+  const adminError = document.getElementById('adminError');
+  const ringWrapAdmin = document.getElementById('ringWrapAdmin');
+
+  adminForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    ringWrap.classList.add('unlocking');
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Doğrulanıyor...';
+    adminError.style.display = 'none';
+    adminBtn.disabled = true;
+    adminBtn.textContent = 'Doğrulanıyor...';
+    const kullanici_adi = document.getElementById('adminUser').value.trim();
+    const sifre = document.getElementById('adminPass').value;
+
+    try {
+      const res = await fetch(`${FASTAPI_BASE_URL}/admin_login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kullanici_adi, sifre }),
+      });
+      const veri = await res.json();
+      if (veri && veri.basarili) {
+        ringWrapAdmin.classList.add('unlocking');
+        setTimeout(() => {
+          loginScreen.classList.add('hidden');
+          appRoot.classList.remove('hidden');
+          inputEl.focus();
+        }, 500);
+      } else {
+        adminError.textContent = 'Kullanıcı adı veya şifre hatalı.';
+        adminError.style.display = 'block';
+        adminBtn.disabled = false;
+        adminBtn.textContent = 'Giriş Yap';
+      }
+    } catch (err) {
+      adminError.textContent = 'Sunucuya bağlanılamadı, tekrar deneyin.';
+      adminError.style.display = 'block';
+      adminBtn.disabled = false;
+      adminBtn.textContent = 'Giriş Yap';
+    }
+  });
+
+  // Müşteri girişi (kozmetik)
+  const customerForm = document.getElementById('customerForm');
+  const customerBtn = document.getElementById('customerBtn');
+  const ringWrapCustomer = document.getElementById('ringWrapCustomer');
+
+  customerForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    ringWrapCustomer.classList.add('unlocking');
+    customerBtn.disabled = true;
+    customerBtn.textContent = 'Doğrulanıyor...';
     setTimeout(() => {
       loginScreen.classList.add('hidden');
-      appRoot.classList.remove('hidden');
-      inputEl.focus();
+      customerRoot.classList.remove('hidden');
     }, 650);
   });
 
