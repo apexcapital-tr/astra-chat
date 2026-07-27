@@ -251,14 +251,14 @@
   @keyframes custFadeIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
 
   .cust-progress{display:flex; align-items:flex-start; justify-content:center; margin-bottom:22px;}
-  .cust-progress-step{display:flex; flex-direction:column; align-items:center; gap:6px; width:76px;}
+  .cust-progress-step{display:flex; flex-direction:column; align-items:center; gap:6px; width:62px;}
   .cust-progress-circle{
     width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
     background:#0f221c; border:1px solid var(--border); color:var(--muted); font-size:12.5px; font-weight:700;
     transition:background .35s, border-color .35s, color .35s, transform .35s;
   }
-  .cust-progress-label{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; text-align:center; transition:color .35s;}
-  .cust-progress-line{flex:1; height:2px; background:var(--border); margin:14px 6px 0; max-width:40px; transition:background .35s;}
+  .cust-progress-label{font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; text-align:center; transition:color .35s;}
+  .cust-progress-line{flex:1; height:2px; background:var(--border); margin:14px 4px 0; max-width:26px; transition:background .35s;}
   .cust-progress-step.aktif .cust-progress-circle{background:var(--accent); border-color:var(--accent); color:var(--panel); transform:scale(1.12);}
   .cust-progress-step.aktif .cust-progress-label{color:var(--title); font-weight:600;}
   .cust-progress-step.tamam .cust-progress-circle{background:transparent; border-color:var(--accent); color:var(--accent);}
@@ -282,6 +282,9 @@
   .cust-result-title{text-align:center; color:var(--title); font-size:17px; font-weight:600; margin-bottom:4px;}
   .cust-result-sub{text-align:center; color:var(--muted); font-size:13px; margin-bottom:18px;}
   .cust-restart-btn{background:transparent; border:1px solid var(--border); color:var(--text);}
+  .cust-taksit-liste{display:flex; flex-direction:column; gap:6px; margin-bottom:4px;}
+  .cust-taksit-row{display:flex; justify-content:space-between; align-items:center; background:#0f221c; border:1px solid var(--border); border-radius:8px; padding:8px 12px; font-size:12.5px; color:var(--text);}
+  .cust-taksit-row span{color:var(--muted);}
 </style>
 </head>
 <body>
@@ -424,12 +427,17 @@
       <div class="cust-progress-line"></div>
       <div class="cust-progress-step" data-adim="2">
         <div class="cust-progress-circle">2</div>
-        <div class="cust-progress-label">Belge Onayı</div>
+        <div class="cust-progress-label">Ödeme Planı</div>
       </div>
       <div class="cust-progress-line"></div>
       <div class="cust-progress-step" data-adim="3">
         <div class="cust-progress-circle">3</div>
-        <div class="cust-progress-label">Sonuç</div>
+        <div class="cust-progress-label">Değerlendirme</div>
+      </div>
+      <div class="cust-progress-line"></div>
+      <div class="cust-progress-step" data-adim="4">
+        <div class="cust-progress-circle">4</div>
+        <div class="cust-progress-label">Onay</div>
       </div>
     </div>
 
@@ -493,6 +501,23 @@
       <button type="button" class="ml-submit-btn" id="cust1bNextBtn" style="margin-top:14px;">Devam Et</button>
     </div>
 
+    <div class="cust-step hidden" id="custStepOdeme">
+      <div class="ml-odeme-baslik" style="margin-top:0;">Örnek ödeme planı</div>
+      <div class="cust-info">Talep ettiğiniz tutar ve vadeye göre hesaplanan örnek ödeme planınız aşağıdadır. Onay durumu bir sonraki adımda belirlenecektir.</div>
+      <div class="ml-sonuc-grid ml-sonuc-grid-2">
+        <div class="ml-stat"><span>Aylık ödeme</span><b id="odemeAylik">-</b></div>
+        <div class="ml-stat"><span>Taksit sayısı</span><b id="odemeTaksit">-</b></div>
+        <div class="ml-stat"><span>Toplam geri ödeme</span><b id="odemeToplam">-</b></div>
+        <div class="ml-stat"><span>Toplam faiz</span><b id="odemeFaiz">-</b></div>
+      </div>
+      <div class="ml-odeme-baslik">Taksit takvimi</div>
+      <div class="cust-taksit-liste" id="odemeTaksitListe"></div>
+      <button type="button" class="ml-submit-btn" id="odemeDevamBtn" style="margin-top:14px;">Devam Et</button>
+      <button type="button" id="odemeGeriBtn" style="display:block; margin:12px auto 0; background:transparent; border:none; color:var(--muted); font-size:12px; cursor:pointer;">‹ Geri</button>
+    </div>
+
+    <div class="cust-step hidden" id="custStep3"></div>
+
     <div class="cust-step hidden" id="custStep2">
       <div class="ml-section-title">Belge onayı</div>
       <label class="cust-check-row"><input type="checkbox" id="custKvkk"> KVKK onayı</label>
@@ -500,9 +525,21 @@
       <label class="cust-check-row"><input type="checkbox" id="custSigorta"> Sağlık sigortası onayı</label>
       <div class="ml-hata hidden" id="custBelgeHata">Devam etmek için üç onayı da işaretlemeniz gerekiyor.</div>
       <button type="button" class="ml-submit-btn" id="custBelgeNextBtn" style="margin-top:10px;">Onayla ve Devam Et</button>
+      <button type="button" class="cust-back-btn" data-geri="custStep3">‹ Geri</button>
     </div>
 
-    <div class="cust-step hidden" id="custStep3"></div>
+    <div class="cust-step hidden" id="custStepAktar">
+      <div class="cust-result-icon" style="background:rgba(216,154,24,.18); color:var(--accent); box-shadow:0 0 0 8px rgba(216,154,24,.08);">₺</div>
+      <div class="cust-result-title">Tutar hesabınıza aktarılsın mı?</div>
+      <div class="cust-result-sub" id="aktarAciklama">Bu işlem sonrasında geri alınamaz.</div>
+      <div class="cust-choice-row">
+        <button type="button" class="ml-submit-btn" id="aktarEvetBtn">Evet, hesabıma aktar</button>
+        <button type="button" class="ml-submit-btn cust-secondary-btn" id="aktarHayirBtn">Hayır, vazgeç</button>
+      </div>
+      <button type="button" class="cust-back-btn" data-geri="custStep2">‹ Geri</button>
+    </div>
+
+    <div class="cust-step hidden" id="custStepFinal"></div>
 
   </div>
 </div>
@@ -1021,8 +1058,15 @@
 
   // --- Müşteri kredi başvuru akışı ---
   let custPayload = null;
+  let custSonuc = null;
+  let custKaynakAdim = 'custStep1a';
 
-  const CUST_ADIM_HARITASI = { custStep1a: 1, custStep1b: 1, custStep2: 2, custStep3: 3 };
+  const CUST_ADIM_HARITASI = {
+    custStep1a: 1, custStep1b: 1,
+    custStepOdeme: 2,
+    custStep3: 3,
+    custStep2: 4, custStepAktar: 4, custStepFinal: 4,
+  };
 
   function custSetProgress(adim) {
     document.querySelectorAll('.cust-progress-step').forEach(el => {
@@ -1078,7 +1122,9 @@
       InterestRate: faiz, BaseInterestRate: faiz - 0.02,
       NewCalculatedMonthlyPayment: custYeniPayment(tutar, vade, faiz),
     };
-    custGoto('custStep2');
+    custKaynakAdim = 'custStep1a';
+    custOdemePlanGoster();
+    custGoto('custStepOdeme');
   });
 
   // Yeni müşteri: 8 soru + kredi bilgileri, kredi bürosu verileri simüle edilir (gelire orantılı).
@@ -1113,21 +1159,51 @@
       InterestRate: faiz, BaseInterestRate: faiz - 0.02,
       NewCalculatedMonthlyPayment: custYeniPayment(tutar, vade, faiz),
     };
-    custGoto('custStep2');
+    custKaynakAdim = 'custStep1b';
+    custOdemePlanGoster();
+    custGoto('custStepOdeme');
   });
 
-  document.getElementById('custBelgeNextBtn').addEventListener('click', async () => {
-    const kvkk = document.getElementById('custKvkk').checked;
-    const sozlesme = document.getElementById('custSozlesme').checked;
-    const sigorta = document.getElementById('custSigorta').checked;
-    const hataEl = document.getElementById('custBelgeHata');
-    if (!kvkk || !sozlesme || !sigorta) {
-      hataEl.classList.remove('hidden');
-      return;
-    }
-    hataEl.classList.add('hidden');
+  // Adım 2: örnek ödeme planı — tamamen istemci tarafında hesaplanır, henüz onay/red belli değildir.
+  function custOdemePlanGoster() {
+    const tutar = custPayload.LoanAmount;
+    const vade = custPayload.LoanDuration;
+    const faiz = custPayload.InterestRate;
+    const aylik = custYeniPayment(tutar, vade, faiz);
+    const toplam = aylik * vade;
+    const faizTutari = toplam - tutar;
 
-    const btn = document.getElementById('custBelgeNextBtn');
+    document.getElementById('odemeAylik').textContent = aylik.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) + ' TL';
+    document.getElementById('odemeTaksit').textContent = vade;
+    document.getElementById('odemeToplam').textContent = toplam.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) + ' TL';
+    document.getElementById('odemeFaiz').textContent = faizTutari.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) + ' TL';
+
+    const liste = document.getElementById('odemeTaksitListe');
+    liste.innerHTML = '';
+    const bugun = new Date();
+    const gosterilecek = Math.min(3, vade);
+    for (let i = 1; i <= gosterilecek; i++) {
+      const tarih = new Date(bugun.getFullYear(), bugun.getMonth() + i, bugun.getDate());
+      const tarihMetni = tarih.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+      const satir = document.createElement('div');
+      satir.className = 'cust-taksit-row';
+      satir.innerHTML = `<span>${i}. Taksit · ${tarihMetni}</span><b>${aylik.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} TL</b>`;
+      liste.appendChild(satir);
+    }
+    if (vade > gosterilecek) {
+      const notSatiri = document.createElement('div');
+      notSatiri.className = 'cust-taksit-row';
+      notSatiri.style.opacity = '.6';
+      notSatiri.innerHTML = `<span>... ve ${vade - gosterilecek} taksit daha</span><b>${aylik.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} TL</b>`;
+      liste.appendChild(notSatiri);
+    }
+  }
+
+  document.getElementById('odemeGeriBtn').addEventListener('click', () => custGoto(custKaynakAdim));
+
+  // Adım 3: gerçek onay/red kararı burada, ödeme planı görüldükten sonra alınır.
+  document.getElementById('odemeDevamBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('odemeDevamBtn');
     btn.disabled = true;
     btn.textContent = 'Değerlendiriliyor...';
 
@@ -1144,7 +1220,8 @@
     }
 
     btn.disabled = false;
-    btn.textContent = 'Onayla ve Devam Et';
+    btn.textContent = 'Devam Et';
+    custSonuc = sonuc;
     custSonucGoster(sonuc);
     custGoto('custStep3');
   });
@@ -1152,20 +1229,26 @@
   function custSonucGoster(sonuc) {
     const kapsayici = document.getElementById('custStep3');
     if (sonuc.hata) {
-      kapsayici.innerHTML = `<div class="ml-hata">${sonuc.hata}</div>`;
+      kapsayici.innerHTML = `
+        <div class="ml-hata">${sonuc.hata}</div>
+        <button type="button" id="sonucGeriBtn" style="display:block; margin:12px auto 0; background:transparent; border:none; color:var(--muted); font-size:12px; cursor:pointer;">‹ Geri</button>`;
+      document.getElementById('sonucGeriBtn').addEventListener('click', () => custGoto('custStepOdeme'));
       return;
     }
     if (sonuc.onay === 1) {
       kapsayici.innerHTML = `
         <div class="cust-result-icon onay-yesil">✓</div>
-        <div class="cust-result-title">Krediniz onaylandı</div>
-        <div class="cust-result-sub">${sonuc.odeme_plani.talep_edilen_tutar.toLocaleString('tr-TR')} TL hesabınıza aktarıldı.</div>
+        <div class="cust-result-title">Başvurunuz onaylandı</div>
+        <div class="cust-result-sub">Devam etmek için belge onayı adımına geçin. Tutar bu adımda henüz hesabınıza aktarılmayacaktır.</div>
         <div class="ml-sonuc-grid">
+          <div class="ml-stat"><span>Talep edilen tutar</span><b>${sonuc.odeme_plani.talep_edilen_tutar.toLocaleString('tr-TR')}</b></div>
           <div class="ml-stat"><span>Aylık ödeme</span><b>${sonuc.odeme_plani.aylik_odeme.toLocaleString('tr-TR')}</b></div>
-          <div class="ml-stat"><span>Taksit sayısı</span><b>${sonuc.odeme_plani.taksit_sayisi}</b></div>
           <div class="ml-stat renk-yesil"><span>Risk bandı</span><b>${sonuc.risk_bandi}</b></div>
         </div>
-        <button type="button" class="ml-submit-btn cust-restart-btn" id="custRestartBtn" style="margin-top:20px;">Yeni Başvuru</button>`;
+        <button type="button" class="ml-submit-btn" id="sonucDevamBtn" style="margin-top:16px;">Belge Onayına Geç</button>
+        <button type="button" id="sonucGeriBtn" style="display:block; margin:10px auto 0; background:transparent; border:none; color:var(--muted); font-size:12px; cursor:pointer;">‹ Geri</button>`;
+      document.getElementById('sonucDevamBtn').addEventListener('click', () => custGoto('custStep2'));
+      document.getElementById('sonucGeriBtn').addEventListener('click', () => custGoto('custStepOdeme'));
     } else {
       kapsayici.innerHTML = `
         <div class="cust-result-icon onay-kirmizi">✕</div>
@@ -1173,15 +1256,73 @@
         <div class="cust-result-sub">Talep ettiğiniz koşullarla şu an onay veremiyoruz.</div>
         ${mlOneriHtml(sonuc.onay_onerisi)}
         <button type="button" class="ml-submit-btn cust-restart-btn" id="custRestartBtn" style="margin-top:20px;">Yeni Başvuru</button>`;
-    }
-    const yenidenBtn = document.getElementById('custRestartBtn');
-    if (yenidenBtn) {
-      yenidenBtn.addEventListener('click', () => {
+      document.getElementById('custRestartBtn').addEventListener('click', () => {
         loginScreen.classList.remove('hidden');
         customerRoot.classList.add('hidden');
         gosterKart(roleCard);
       });
     }
+  }
+
+  // Adım 4: belge onayı — karar zaten verildi, burada sadece belgeler onaylanır.
+  document.getElementById('custBelgeNextBtn').addEventListener('click', () => {
+    const kvkk = document.getElementById('custKvkk').checked;
+    const sozlesme = document.getElementById('custSozlesme').checked;
+    const sigorta = document.getElementById('custSigorta').checked;
+    const hataEl = document.getElementById('custBelgeHata');
+    if (!kvkk || !sozlesme || !sigorta) {
+      hataEl.classList.remove('hidden');
+      return;
+    }
+    hataEl.classList.add('hidden');
+    custAktarGoster();
+    custGoto('custStepAktar');
+  });
+
+  // Adım 4 (devam): ciddi bir onay olduğu için transfer otomatik değil, ayrıca sorulur.
+  function custAktarGoster() {
+    const tutar = custSonuc.odeme_plani.talep_edilen_tutar.toLocaleString('tr-TR');
+    document.getElementById('aktarAciklama').textContent =
+      `${tutar} TL tutarındaki krediniz hesabınıza aktarılacaktır. Bu işlem sonrasında geri alınamaz — onaylıyor musunuz?`;
+  }
+
+  document.getElementById('aktarEvetBtn').addEventListener('click', () => {
+    custFinalGoster(true);
+    custGoto('custStepFinal');
+  });
+  document.getElementById('aktarHayirBtn').addEventListener('click', () => {
+    custFinalGoster(false);
+    custGoto('custStepFinal');
+  });
+
+  function custFinalGoster(aktarildiMi) {
+    const kapsayici = document.getElementById('custStepFinal');
+    if (aktarildiMi) {
+      const tutar = custSonuc.odeme_plani.talep_edilen_tutar.toLocaleString('tr-TR');
+      kapsayici.innerHTML = `
+        <div class="cust-result-icon onay-yesil">✓</div>
+        <div class="cust-result-title">İşlem tamamlandı</div>
+        <div class="cust-result-sub">${tutar} TL hesabınıza aktarıldı.</div>
+        <div class="ml-sonuc-grid">
+          <div class="ml-stat"><span>Aylık ödeme</span><b>${custSonuc.odeme_plani.aylik_odeme.toLocaleString('tr-TR')}</b></div>
+          <div class="ml-stat"><span>Taksit sayısı</span><b>${custSonuc.odeme_plani.taksit_sayisi}</b></div>
+          <div class="ml-stat renk-yesil"><span>Risk bandı</span><b>${custSonuc.risk_bandi}</b></div>
+        </div>
+        <button type="button" class="ml-submit-btn cust-restart-btn" id="custRestartBtn2" style="margin-top:20px;">Yeni Başvuru</button>`;
+    } else {
+      kapsayici.innerHTML = `
+        <div class="cust-result-icon" style="background:rgba(255,255,255,.08); color:var(--muted); box-shadow:none;">i</div>
+        <div class="cust-result-title">İşlem iptal edildi</div>
+        <div class="cust-result-sub">Tutar hesabınıza aktarılmadı. Onayınız halen geçerli, istediğiniz zaman aktarımı tamamlayabilirsiniz.</div>
+        <button type="button" class="ml-submit-btn" id="aktarTekrarBtn" style="margin-top:20px;">Aktarımı Tekrar Dene</button>
+        <button type="button" class="ml-submit-btn cust-restart-btn" id="custRestartBtn2" style="margin-top:10px;">Yeni Başvuru</button>`;
+      document.getElementById('aktarTekrarBtn').addEventListener('click', () => custGoto('custStepAktar'));
+    }
+    document.getElementById('custRestartBtn2').addEventListener('click', () => {
+      loginScreen.classList.remove('hidden');
+      customerRoot.classList.add('hidden');
+      gosterKart(roleCard);
+    });
   }
 
   // --- Yönetici ML tahmin formu ---
