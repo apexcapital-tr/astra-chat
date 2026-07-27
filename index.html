@@ -243,6 +243,23 @@
   .ml-modal-header h3{margin:0;}
   .ml-modal-close{background:transparent; border:none; color:var(--muted); font-size:20px; line-height:1; cursor:pointer; padding:0 4px;}
   .ml-modal-close:hover{color:var(--text);}
+
+  /* ---- Müşteri kredi başvuru akışı ---- */
+  .cust-body{flex:1; overflow-y:auto; padding:18px 20px;}
+  .cust-step.hidden{display:none;}
+  .cust-question{color:var(--title); font-size:15px; font-weight:600; margin:8px 0 16px; text-align:center;}
+  .cust-choice-row{display:flex; flex-direction:column; gap:10px;}
+  .cust-secondary-btn{background:transparent; border:1px solid var(--border); color:var(--text);}
+  .cust-info{background:rgba(74,197,187,.08); border:1px solid rgba(74,197,187,.25); color:var(--muted); font-size:12px; padding:10px 12px; border-radius:9px; margin-bottom:16px; line-height:1.5;}
+  .cust-back-btn{display:block; margin:12px auto 0; background:transparent; border:none; color:var(--muted); font-size:12px; cursor:pointer;}
+  .cust-back-btn:hover{color:var(--text);}
+  .cust-check-row{display:flex; align-items:center; gap:9px; background:#0f221c; border:1px solid var(--border); border-radius:9px; padding:11px 13px; margin-bottom:9px; font-size:13.5px; color:var(--text); cursor:pointer;}
+  .cust-check-row input{width:16px; height:16px; accent-color:var(--accent);}
+  .cust-result-icon{width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px;}
+  .cust-result-icon.onay-yesil{background:var(--accent); color:var(--panel);}
+  .cust-result-icon.onay-kirmizi{background:rgba(224,102,90,.2); color:#e0665a;}
+  .cust-result-title{text-align:center; color:var(--title); font-size:16px; font-weight:600; margin-bottom:4px;}
+  .cust-result-sub{text-align:center; color:var(--muted); font-size:13px; margin-bottom:16px;}
 </style>
 </head>
 <body>
@@ -270,7 +287,7 @@
     <h1 class="login-title">Güvenli Erişim</h1>
     <p class="login-sub">Giriş türünüzü seçin.</p>
     <button type="button" class="login-btn" id="roleAdminBtn">🛡️ Yönetici Girişi</button>
-    <button type="button" class="login-btn" id="roleCustomerBtn" style="background:transparent; border:1px solid var(--border); color:var(--text); margin-top:10px;">👤 Müşteri Girişi</button>
+    <button type="button" class="login-btn" id="roleCustomerBtn" style="background:transparent; border:1px solid var(--border); color:var(--text); margin-top:10px;">👤 Kredi Başvurusu</button>
     <p class="login-foot">THE PINNACLE OF BANKING</p>
   </div>
 
@@ -323,7 +340,7 @@
       </svg>
     </div>
     <p class="login-brand">Apex Capital</p>
-    <h1 class="login-title">👤 Müşteri Girişi</h1>
+    <h1 class="login-title">👤 Kredi Başvurusu</h1>
     <p class="login-sub">Kredi başvuru işlemleriniz için<br>giriş yapın.</p>
     <form id="customerForm">
       <div class="login-field">
@@ -352,8 +369,89 @@
       <h1>Kredi Başvurusu</h1>
     </div>
   </div>
-  <div class="messages">
-    <div class="msg bot">Kredi başvuru modülümüz şu anda hazırlanıyor. Modelimiz tamamlandığında buradan başvurunuzu yapabilecek, sonucu ve gerekli belge onaylarını anında görebileceksiniz.</div>
+  <div class="cust-body" id="custBody">
+
+    <div class="cust-step" id="custStep0">
+      <p class="cust-question">Bankamızın mevcut müşterisi misiniz?</p>
+      <div class="cust-choice-row">
+        <button type="button" class="ml-submit-btn" id="custYesBtn">Evet, müşterisiyim</button>
+        <button type="button" class="ml-submit-btn cust-secondary-btn" id="custNoBtn">Hayır, yeni başvuruyorum</button>
+      </div>
+    </div>
+
+    <div class="cust-step hidden" id="custStep1a">
+      <div class="cust-info">Kimlik, gelir ve kredi geçmişi bilgileriniz sistemimizde güvenle kayıtlıdır — tekrar girmenize gerek yok.</div>
+      <div class="ml-field">
+        <label>Talep edilen kredi tutarı</label>
+        <input type="number" id="cust1aTutar" value="40000">
+      </div>
+      <div class="ml-field">
+        <label>Vade (ay)</label>
+        <input type="number" id="cust1aVade" value="48">
+      </div>
+      <div class="ml-field">
+        <label>Kredi amacı</label>
+        <select id="cust1aAmac">
+          <option value="Auto">Taşıt</option>
+          <option value="Home" selected>Ev</option>
+          <option value="Education">Eğitim</option>
+          <option value="Debt Consolidation">Borç Birleştirme</option>
+          <option value="Other">Diğer</option>
+        </select>
+      </div>
+      <button type="button" class="ml-submit-btn" id="cust1aNextBtn">Devam Et</button>
+      <button type="button" class="cust-back-btn" data-geri="custStep0">‹ Geri</button>
+    </div>
+
+    <div class="cust-step hidden" id="custStep1b">
+      <div class="ml-grid">
+        <div class="ml-field"><label>Yaş</label><input type="number" id="cust1bYas" value="30"></div>
+        <div class="ml-field"><label>İş süresi (yıl)</label><input type="number" id="cust1bIsSuresi" value="4"></div>
+        <div class="ml-field"><label>Medeni durum</label>
+          <select id="cust1bMedeni"><option value="Single">Bekar</option><option value="Married">Evli</option><option value="Divorced">Boşanmış</option><option value="Widowed">Dul</option></select>
+        </div>
+        <div class="ml-field"><label>Eğitim düzeyi</label>
+          <select id="cust1bEgitim"><option value="High School">Lise</option><option value="Associate">Ön Lisans</option><option value="Bachelor" selected>Lisans</option><option value="Master">Yüksek Lisans</option><option value="Doctorate">Doktora</option></select>
+        </div>
+        <div class="ml-field"><label>İstihdam durumu</label>
+          <select id="cust1bIstihdam"><option value="Employed" selected>Çalışıyor</option><option value="Self-Employed">Serbest Meslek</option><option value="Unemployed">Çalışmıyor</option></select>
+        </div>
+        <div class="ml-field"><label>Ev sahipliği durumu</label>
+          <select id="cust1bEv"><option value="Own">Ev Sahibi</option><option value="Mortgage" selected>İpotekli</option><option value="Rent">Kiracı</option><option value="Other">Diğer</option></select>
+        </div>
+        <div class="ml-field"><label>Bakmakla yükümlü kişi sayısı</label><input type="number" id="cust1bBakmakla" value="0"></div>
+        <div class="ml-field"><label>Aylık gelir</label><input type="number" id="cust1bGelir" value="25000"></div>
+      </div>
+      <div class="ml-section-title">Kredi bilgileri</div>
+      <div class="ml-grid">
+        <div class="ml-field"><label>Talep edilen kredi tutarı</label><input type="number" id="cust1bTutar" value="40000"></div>
+        <div class="ml-field"><label>Vade (ay)</label><input type="number" id="cust1bVade" value="48"></div>
+      </div>
+      <div class="ml-field" style="margin-top:10px;">
+        <label>Kredi amacı</label>
+        <select id="cust1bAmac">
+          <option value="Auto">Taşıt</option>
+          <option value="Home" selected>Ev</option>
+          <option value="Education">Eğitim</option>
+          <option value="Debt Consolidation">Borç Birleştirme</option>
+          <option value="Other">Diğer</option>
+        </select>
+      </div>
+      <button type="button" class="ml-submit-btn" id="cust1bNextBtn" style="margin-top:14px;">Devam Et</button>
+      <button type="button" class="cust-back-btn" data-geri="custStep0">‹ Geri</button>
+    </div>
+
+    <div class="cust-step hidden" id="custStep2">
+      <div class="ml-section-title">Belge onayı</div>
+      <label class="cust-check-row"><input type="checkbox" id="custKvkk"> KVKK onayı</label>
+      <label class="cust-check-row"><input type="checkbox" id="custSozlesme"> Kredi sözleşmesi</label>
+      <label class="cust-check-row"><input type="checkbox" id="custSigorta"> Sağlık sigortası onayı</label>
+      <div class="ml-hata hidden" id="custBelgeHata">Devam etmek için üç onayı da işaretlemeniz gerekiyor.</div>
+      <button type="button" class="ml-submit-btn" id="custBelgeNextBtn" style="margin-top:10px;">Onayla ve Devam Et</button>
+    </div>
+
+    <div class="cust-step hidden" id="custStep3"></div>
+
   </div>
 </div>
 
@@ -854,8 +952,151 @@
     setTimeout(() => {
       loginScreen.classList.add('hidden');
       customerRoot.classList.remove('hidden');
+      custGoto('custStep0');
     }, 650);
   });
+
+  // --- Müşteri kredi başvuru akışı ---
+  let custPayload = null;
+
+  function custGoto(id) {
+    document.querySelectorAll('.cust-step').forEach(el => el.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  document.getElementById('custYesBtn').addEventListener('click', () => custGoto('custStep1a'));
+  document.getElementById('custNoBtn').addEventListener('click', () => custGoto('custStep1b'));
+  document.querySelectorAll('.cust-back-btn').forEach(btn => {
+    btn.addEventListener('click', () => custGoto(btn.dataset.geri));
+  });
+
+  // Faiz oranı bankaca sabit atanır: mevcut müşteri biraz daha avantajlı oran alır.
+  function custOranHesapla(mevcutMusteri) {
+    return mevcutMusteri ? 0.20 : 0.23;
+  }
+
+  function custYeniPayment(tutar, vade, faiz) {
+    const r = faiz / 12;
+    return tutar * r / (1 - Math.pow(1 + r, -vade));
+  }
+
+  // Mevcut müşteri: "sistemde kayıtlı" sabit demo profili.
+  document.getElementById('cust1aNextBtn').addEventListener('click', () => {
+    const tutar = Number(document.getElementById('cust1aTutar').value);
+    const vade = Number(document.getElementById('cust1aVade').value);
+    const amac = document.getElementById('cust1aAmac').value;
+    const faiz = custOranHesapla(true);
+
+    custPayload = {
+      Age: 34, MaritalStatus: 'Married', EducationLevel: 'Bachelor', EmploymentStatus: 'Employed',
+      HomeOwnershipStatus: 'Own', NumberOfDependents: 1, JobTenure: 6, Experience: 10,
+      AnnualIncome: 84000, MonthlyIncome: 7000,
+      SavingsAccountBalance: 15000, CheckingAccountBalance: 4000,
+      TotalAssets: 120000, TotalLiabilities: 25000, NetWorth: 95000,
+      MonthlyDebtPayments: 350, DebtToIncomeRatio: 350 / 7000, TotalDebtToIncomeRatio: 350 / 7000,
+      BankruptcyHistory: 0, PreviousLoanDefaults: 0,
+      CreditScore: 690, NumberOfOpenCreditLines: 3, NumberOfCreditInquiries: 1,
+      PaymentHistory: 35, LengthOfCreditHistory: 8, CreditCardUtilizationRate: 0.25,
+      UtilityBillsPaymentHistory: 0.85,
+      LoanAmount: tutar, LoanDuration: vade, LoanPurpose: amac,
+      InterestRate: faiz, BaseInterestRate: faiz - 0.02,
+      NewCalculatedMonthlyPayment: custYeniPayment(tutar, vade, faiz),
+    };
+    custGoto('custStep2');
+  });
+
+  // Yeni müşteri: 8 soru + kredi bilgileri, kredi bürosu verileri simüle edilir (gelire orantılı).
+  document.getElementById('cust1bNextBtn').addEventListener('click', () => {
+    const yas = Number(document.getElementById('cust1bYas').value);
+    const isSuresi = Number(document.getElementById('cust1bIsSuresi').value);
+    const medeni = document.getElementById('cust1bMedeni').value;
+    const egitim = document.getElementById('cust1bEgitim').value;
+    const istihdam = document.getElementById('cust1bIstihdam').value;
+    const ev = document.getElementById('cust1bEv').value;
+    const bakmakla = Number(document.getElementById('cust1bBakmakla').value);
+    const gelir = Number(document.getElementById('cust1bGelir').value);
+    const tutar = Number(document.getElementById('cust1bTutar').value);
+    const vade = Number(document.getElementById('cust1bVade').value);
+    const amac = document.getElementById('cust1bAmac').value;
+    const faiz = custOranHesapla(false);
+    const borcOdemesi = Math.round(gelir * 0.15);
+
+    custPayload = {
+      Age: yas, MaritalStatus: medeni, EducationLevel: egitim, EmploymentStatus: istihdam,
+      HomeOwnershipStatus: ev, NumberOfDependents: bakmakla, JobTenure: isSuresi, Experience: isSuresi,
+      AnnualIncome: gelir * 12, MonthlyIncome: gelir,
+      SavingsAccountBalance: Math.round(gelir * 2), CheckingAccountBalance: Math.round(gelir),
+      TotalAssets: Math.round(gelir * 10), TotalLiabilities: Math.round(gelir * 3),
+      NetWorth: Math.round(gelir * 10) - Math.round(gelir * 3),
+      MonthlyDebtPayments: borcOdemesi, DebtToIncomeRatio: borcOdemesi / gelir, TotalDebtToIncomeRatio: borcOdemesi / gelir,
+      BankruptcyHistory: 0, PreviousLoanDefaults: 0,
+      CreditScore: 650, NumberOfOpenCreditLines: 2, NumberOfCreditInquiries: 2,
+      PaymentHistory: 25, LengthOfCreditHistory: 5, CreditCardUtilizationRate: 0.35,
+      UtilityBillsPaymentHistory: 0.7,
+      LoanAmount: tutar, LoanDuration: vade, LoanPurpose: amac,
+      InterestRate: faiz, BaseInterestRate: faiz - 0.02,
+      NewCalculatedMonthlyPayment: custYeniPayment(tutar, vade, faiz),
+    };
+    custGoto('custStep2');
+  });
+
+  document.getElementById('custBelgeNextBtn').addEventListener('click', async () => {
+    const kvkk = document.getElementById('custKvkk').checked;
+    const sozlesme = document.getElementById('custSozlesme').checked;
+    const sigorta = document.getElementById('custSigorta').checked;
+    const hataEl = document.getElementById('custBelgeHata');
+    if (!kvkk || !sozlesme || !sigorta) {
+      hataEl.classList.remove('hidden');
+      return;
+    }
+    hataEl.classList.add('hidden');
+
+    const btn = document.getElementById('custBelgeNextBtn');
+    btn.disabled = true;
+    btn.textContent = 'Değerlendiriliyor...';
+
+    let sonuc;
+    try {
+      const res = await fetch(`${FASTAPI_BASE_URL}/kredi_tahmin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(custPayload),
+      });
+      sonuc = await res.json();
+    } catch (err) {
+      sonuc = { hata: 'Sunucuya bağlanılamadı, tekrar deneyin.' };
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Onayla ve Devam Et';
+    custSonucGoster(sonuc);
+    custGoto('custStep3');
+  });
+
+  function custSonucGoster(sonuc) {
+    const kapsayici = document.getElementById('custStep3');
+    if (sonuc.hata) {
+      kapsayici.innerHTML = `<div class="ml-hata">${sonuc.hata}</div>`;
+      return;
+    }
+    if (sonuc.onay === 1) {
+      kapsayici.innerHTML = `
+        <div class="cust-result-icon onay-yesil">✓</div>
+        <div class="cust-result-title">Krediniz onaylandı</div>
+        <div class="cust-result-sub">${sonuc.odeme_plani.talep_edilen_tutar.toLocaleString('tr-TR')} TL hesabınıza aktarıldı.</div>
+        <div class="ml-sonuc-grid">
+          <div class="ml-stat"><span>Aylık ödeme</span><b>${sonuc.odeme_plani.aylik_odeme.toLocaleString('tr-TR')}</b></div>
+          <div class="ml-stat"><span>Taksit sayısı</span><b>${sonuc.odeme_plani.taksit_sayisi}</b></div>
+          <div class="ml-stat renk-yesil"><span>Risk bandı</span><b>${sonuc.risk_bandi}</b></div>
+        </div>`;
+    } else {
+      kapsayici.innerHTML = `
+        <div class="cust-result-icon onay-kirmizi">✕</div>
+        <div class="cust-result-title">Başvurunuz onaylanmadı</div>
+        <div class="cust-result-sub">Talep ettiğiniz koşullarla şu an onay veremiyoruz.</div>
+        ${mlOneriHtml(sonuc.onay_onerisi)}`;
+    }
+  }
 
   // --- Yönetici ML tahmin formu ---
   // /kredi_tahmin FastAPI uç noktasına doğrudan bağlanır (admin_login gibi, n8n'e gerek yok).
