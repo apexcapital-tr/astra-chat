@@ -532,6 +532,10 @@
       <div class="cust-result-icon" style="background:rgba(216,154,24,.18); color:var(--accent); box-shadow:0 0 0 8px rgba(216,154,24,.08);">₺</div>
       <div class="cust-result-title">Tutar hesabınıza aktarılsın mı?</div>
       <div class="cust-result-sub" id="aktarAciklama">Bu işlem sonrasında geri alınamaz.</div>
+      <div class="cust-taksit-row" style="margin-bottom:18px;">
+        <span id="aktarHesapNot">Hesap</span>
+        <b id="aktarHesapNo">-</b>
+      </div>
       <div class="cust-choice-row">
         <button type="button" class="ml-submit-btn" id="aktarEvetBtn">Evet, hesabıma aktar</button>
         <button type="button" class="ml-submit-btn cust-secondary-btn" id="aktarHayirBtn">Hayır, vazgeç</button>
@@ -1060,6 +1064,22 @@
   let custPayload = null;
   let custSonuc = null;
   let custKaynakAdim = 'custStep1a';
+  let custYeniHesapNo = null;
+
+  // Mevcut müşterinin sistemde kayıtlı olduğu varsayılan demo hesabı (sabit).
+  const DEMO_HESAP_NO = 'TR64 0012 0009 8765 4321 00';
+
+  // Yeni müşteri için: henüz hesabı yok, onayla birlikte adına açılan demo hesap numarası üretilir.
+  function custHesapNoUret() {
+    const blok = () => String(Math.floor(1000 + Math.random() * 9000));
+    return `TR${Math.floor(10 + Math.random() * 89)} 00${Math.floor(10 + Math.random() * 89)} ${blok()} ${blok()} ${blok()} ${blok()}`;
+  }
+
+  function custAktifHesapNo() {
+    if (custKaynakAdim === 'custStep1a') return DEMO_HESAP_NO;
+    if (!custYeniHesapNo) custYeniHesapNo = custHesapNoUret();
+    return custYeniHesapNo;
+  }
 
   const CUST_ADIM_HARITASI = {
     custStep1a: 1, custStep1b: 1,
@@ -1181,21 +1201,26 @@
     const liste = document.getElementById('odemeTaksitListe');
     liste.innerHTML = '';
     const bugun = new Date();
-    const gosterilecek = Math.min(3, vade);
-    for (let i = 1; i <= gosterilecek; i++) {
+    const taksitSatiri = (i) => {
       const tarih = new Date(bugun.getFullYear(), bugun.getMonth() + i, bugun.getDate());
       const tarihMetni = tarih.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
       const satir = document.createElement('div');
       satir.className = 'cust-taksit-row';
       satir.innerHTML = `<span>${i}. Taksit · ${tarihMetni}</span><b>${aylik.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} TL</b>`;
-      liste.appendChild(satir);
-    }
-    if (vade > gosterilecek) {
-      const notSatiri = document.createElement('div');
-      notSatiri.className = 'cust-taksit-row';
-      notSatiri.style.opacity = '.6';
-      notSatiri.innerHTML = `<span>... ve ${vade - gosterilecek} taksit daha</span><b>${aylik.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} TL</b>`;
-      liste.appendChild(notSatiri);
+      return satir;
+    };
+
+    if (vade <= 5) {
+      for (let i = 1; i <= vade; i++) liste.appendChild(taksitSatiri(i));
+    } else {
+      for (let i = 1; i <= 3; i++) liste.appendChild(taksitSatiri(i));
+      const araNot = document.createElement('div');
+      araNot.className = 'cust-taksit-row';
+      araNot.style.opacity = '.55';
+      araNot.style.justifyContent = 'center';
+      araNot.innerHTML = `<span>· · ·</span>`;
+      liste.appendChild(araNot);
+      for (let i = vade - 1; i <= vade; i++) liste.appendChild(taksitSatiri(i));
     }
   }
 
@@ -1257,6 +1282,7 @@
         ${mlOneriHtml(sonuc.onay_onerisi)}
         <button type="button" class="ml-submit-btn cust-restart-btn" id="custRestartBtn" style="margin-top:20px;">Yeni Başvuru</button>`;
       document.getElementById('custRestartBtn').addEventListener('click', () => {
+        custYeniHesapNo = null;
         loginScreen.classList.remove('hidden');
         customerRoot.classList.add('hidden');
         gosterKart(roleCard);
@@ -1282,8 +1308,12 @@
   // Adım 4 (devam): ciddi bir onay olduğu için transfer otomatik değil, ayrıca sorulur.
   function custAktarGoster() {
     const tutar = custSonuc.odeme_plani.talep_edilen_tutar.toLocaleString('tr-TR');
-    document.getElementById('aktarAciklama').textContent =
-      `${tutar} TL tutarındaki krediniz hesabınıza aktarılacaktır. Bu işlem sonrasında geri alınamaz — onaylıyor musunuz?`;
+    const yeniMusteri = custKaynakAdim !== 'custStep1a';
+    document.getElementById('aktarHesapNot').textContent = yeniMusteri ? 'Adınıza açılan yeni hesap' : 'Kayıtlı hesabınız';
+    document.getElementById('aktarHesapNo').textContent = custAktifHesapNo();
+    document.getElementById('aktarAciklama').textContent = yeniMusteri
+      ? `Onayınızla birlikte APEX Capital bünyesinde adınıza bir hesap açılmıştır. ${tutar} TL tutarındaki krediniz bu hesaba aktarılacaktır. Bu işlem sonrasında geri alınamaz — onaylıyor musunuz?`
+      : `${tutar} TL tutarındaki krediniz kayıtlı hesabınıza aktarılacaktır. Bu işlem sonrasında geri alınamaz — onaylıyor musunuz?`;
   }
 
   document.getElementById('aktarEvetBtn').addEventListener('click', () => {
@@ -1302,7 +1332,7 @@
       kapsayici.innerHTML = `
         <div class="cust-result-icon onay-yesil">✓</div>
         <div class="cust-result-title">İşlem tamamlandı</div>
-        <div class="cust-result-sub">${tutar} TL hesabınıza aktarıldı.</div>
+        <div class="cust-result-sub">${tutar} TL, ${custAktifHesapNo()} numaralı hesabınıza aktarıldı.</div>
         <div class="ml-sonuc-grid">
           <div class="ml-stat"><span>Aylık ödeme</span><b>${custSonuc.odeme_plani.aylik_odeme.toLocaleString('tr-TR')}</b></div>
           <div class="ml-stat"><span>Taksit sayısı</span><b>${custSonuc.odeme_plani.taksit_sayisi}</b></div>
@@ -1319,6 +1349,7 @@
       document.getElementById('aktarTekrarBtn').addEventListener('click', () => custGoto('custStepAktar'));
     }
     document.getElementById('custRestartBtn2').addEventListener('click', () => {
+      custYeniHesapNo = null;
       loginScreen.classList.remove('hidden');
       customerRoot.classList.add('hidden');
       gosterKart(roleCard);
