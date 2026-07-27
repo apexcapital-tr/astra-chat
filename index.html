@@ -978,11 +978,9 @@
       icerik = `<div class="ml-hata">${sonuc.eksik_alanlar ? sonuc.hata + ' (' + sonuc.eksik_alanlar.join(', ') + ')' : sonuc.hata}</div>`;
     } else {
       const onayRenk = sonuc.onay === 1 ? 'onay-yesil' : 'onay-kirmizi';
-      const olasilikRenk = sonuc.onay === 1 ? 'renk-yesil' : 'renk-kirmizi';
       icerik = `
         <div class="ml-sonuc-badge ${onayRenk}">${sonuc.onay_metni}</div>
-        <div class="ml-sonuc-grid">
-          <div class="ml-stat ${olasilikRenk}"><span>Onay olasılığı</span><b>${(sonuc.onay_olasiligi * 100).toFixed(1)}%</b></div>
+        <div class="ml-sonuc-grid ml-sonuc-grid-2">
           <div class="ml-stat ${riskRenkSinifi(sonuc.risk_bandi)}"><span>Risk skoru</span><b>${sonuc.risk_skoru}</b></div>
           <div class="ml-stat ${riskRenkSinifi(sonuc.risk_bandi)}"><span>Risk bandı</span><b>${sonuc.risk_bandi}</b></div>
         </div>
