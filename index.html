@@ -869,8 +869,8 @@
       { ad: 'HomeOwnershipStatus', etiket: 'Ev sahipliği durumu', secim: ['Mortgage', 'Other', 'Own', 'Rent'], varsayilan: 'Own' },
     ]},
     { grup: 'Gelir ve varlık', alanlar: [
-      { ad: 'AnnualIncome', etiket: 'Yıllık gelir', varsayilan: 39948 },
-      { ad: 'MonthlyIncome', etiket: 'Aylık gelir', varsayilan: 3329 },
+      { ad: 'AnnualIncome', etiket: 'Yıllık gelir', varsayilan: 90000 },
+      { ad: 'MonthlyIncome', etiket: 'Aylık gelir', varsayilan: 7500 },
       { ad: 'NetWorth', etiket: 'Net varlık', varsayilan: 126928 },
       { ad: 'TotalAssets', etiket: 'Toplam varlık', varsayilan: 146111 },
       { ad: 'TotalLiabilities', etiket: 'Toplam yükümlülük', varsayilan: 19183 },
@@ -889,17 +889,16 @@
       { ad: 'PreviousLoanDefaults', etiket: 'Önceki kredi temerrüdü', secim: ['0', '1'], secimEtiket: { '0': 'Yok', '1': 'Var' }, sayiSecim: true },
     ]},
     { grup: 'Borç durumu', alanlar: [
-      { ad: 'MonthlyDebtPayments', etiket: 'Aylık borç ödemesi', varsayilan: 183 },
-      { ad: 'DebtToIncomeRatio', etiket: 'Borç/gelir oranı (0-1)', varsayilan: 0.3583356 },
+      { ad: 'MonthlyDebtPayments', etiket: 'Aylık borç ödemesi', varsayilan: 100 },
+      { ad: 'DebtToIncomeRatio', etiket: 'Borç/gelir oranı (0-1)', varsayilan: 0.15 },
       { ad: 'TotalDebtToIncomeRatio', etiket: 'Toplam borç/gelir oranı (0-1)', varsayilan: 0.181077198 },
     ]},
     { grup: 'Talep edilen kredi', alanlar: [
-      { ad: 'LoanAmount', etiket: 'Kredi tutarı', varsayilan: 13152 },
+      { ad: 'LoanAmount', etiket: 'Kredi tutarı', varsayilan: 40000 },
       { ad: 'LoanDuration', etiket: 'Vade (ay)', varsayilan: 48 },
       { ad: 'LoanPurpose', etiket: 'Kredi amacı', secim: ['Auto', 'Debt Consolidation', 'Education', 'Home', 'Other'], varsayilan: 'Home' },
       { ad: 'InterestRate', etiket: 'Faiz oranı (0-1, örn 0.22)', varsayilan: 0.22758963 },
       { ad: 'BaseInterestRate', etiket: 'Baz faiz oranı (0-1)', varsayilan: 0.199652 },
-      { ad: 'NewCalculatedMonthlyPayment', etiket: 'Hesaplanan aylık ödeme (referans)', varsayilan: 289.55 },
     ]},
   ];
 
@@ -1035,6 +1034,9 @@
       document.querySelectorAll('#mlFormAlanlari [data-alan]').forEach(el => {
         veri[el.dataset.alan] = el.dataset.sayi ? Number(el.value) : (el.tagName === 'SELECT' ? el.value : Number(el.value));
       });
+      // NewCalculatedMonthlyPayment formdan kaldırıldı, ayni annuite formuluyle otomatik hesaplanir.
+      const _r = veri.InterestRate / 12;
+      veri.NewCalculatedMonthlyPayment = veri.LoanAmount * _r / (1 - Math.pow(1 + _r, -veri.LoanDuration));
       mlSubmitBtn.disabled = true;
       mlSubmitBtn.textContent = 'Hesaplanıyor...';
       try {
