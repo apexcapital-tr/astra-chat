@@ -1345,10 +1345,18 @@
       ? `Onayınızla birlikte APEX Capital bünyesinde adınıza bir hesap açılmıştır. ${tutar} tutarındaki krediniz bu hesaba aktarılacaktır. Bu işlem sonrasında geri alınamaz — onaylıyor musunuz?`
       : `${tutar} tutarındaki krediniz kayıtlı hesabınıza aktarılacaktır. Bu işlem sonrasında geri alınamaz — onaylıyor musunuz?`;
 
-    const telefonMaskeli = yeniMusteri ? custTelefonMaskele(custTelefon) : DEMO_TELEFON_MASKELI;
-    document.getElementById('aktarGuvenlikNot').innerHTML =
-      `${telefonMaskeli} numaralı telefonunuza tek kullanımlık bir şifre gönderilmiştir. Gelen şifre ile giriş yaparak hesabınıza erişebilirsiniz.<br>
-       Güvenlik doğrulamasından geçtikten sonra hesabın tam kullanımını sağlayabilirsiniz.`;
+    // Güvenlik/OTP bilgilendirmesi sadece henüz sistemde kayıtlı olmayan (yeni) müşteriye gösterilir.
+    const guvenlikEl = document.getElementById('aktarGuvenlikNot');
+    if (yeniMusteri) {
+      const telefonMaskeli = custTelefonMaskele(custTelefon);
+      guvenlikEl.innerHTML =
+        `${telefonMaskeli} numaralı telefonunuza tek kullanımlık bir şifre gönderilmiştir. Gelen şifre ile giriş yaparak hesabınıza erişebilirsiniz.<br>
+         Güvenlik doğrulamasından geçtikten sonra hesabın tam kullanımını sağlayabilirsiniz.`;
+      guvenlikEl.classList.remove('hidden');
+    } else {
+      guvenlikEl.innerHTML = '';
+      guvenlikEl.classList.add('hidden');
+    }
   }
 
   document.getElementById('aktarEvetBtn').addEventListener('click', () => {
