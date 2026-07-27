@@ -482,6 +482,7 @@
         </div>
         <div class="ml-field"><label>Bakmakla yükümlü kişi sayısı</label><input type="number" id="cust1bBakmakla" value="0"></div>
         <div class="ml-field"><label>Aylık gelir</label><input type="number" id="cust1bGelir" value="25000"></div>
+        <div class="ml-field"><label>Telefon numarası</label><input type="tel" id="cust1bTelefon" placeholder="05XX XXX XX XX" value="0532 456 78 90"></div>
       </div>
       <div class="ml-section-title">Kredi bilgileri</div>
       <div class="ml-grid">
@@ -532,10 +533,11 @@
       <div class="cust-result-icon" style="background:rgba(216,154,24,.18); color:var(--accent); box-shadow:0 0 0 8px rgba(216,154,24,.08);">₺</div>
       <div class="cust-result-title">Tutar hesabınıza aktarılsın mı?</div>
       <div class="cust-result-sub" id="aktarAciklama">Bu işlem sonrasında geri alınamaz.</div>
-      <div class="cust-taksit-row" style="margin-bottom:18px;">
+      <div class="cust-taksit-row" style="margin-bottom:10px;">
         <span id="aktarHesapNot">Hesap</span>
         <b id="aktarHesapNo">-</b>
       </div>
+      <div class="cust-info" id="aktarGuvenlikNot" style="margin-bottom:16px;"></div>
       <div class="cust-choice-row">
         <button type="button" class="ml-submit-btn" id="aktarEvetBtn">Evet, hesabıma aktar</button>
         <button type="button" class="ml-submit-btn cust-secondary-btn" id="aktarHayirBtn">Hayır, vazgeç</button>
@@ -1070,14 +1072,23 @@
   let custSonuc = null;
   let custKaynakAdim = 'custStep1a';
   let custYeniHesapNo = null;
+  let custTelefon = '';
 
-  // Mevcut müşterinin sistemde kayıtlı olduğu varsayılan demo hesabı (sabit).
-  const DEMO_HESAP_NO = 'TR64 0012 0009 8765 4321 00';
+  // Mevcut müşterinin sistemde kayıtlı olduğu varsayılan demo hesap/telefon (sabit, global format — IBAN değil).
+  const DEMO_HESAP_NO = '4821 7734 9012 5588';
+  const DEMO_TELEFON_MASKELI = '0532 *** ** 17';
 
-  // Yeni müşteri için: henüz hesabı yok, onayla birlikte adına açılan demo hesap numarası üretilir.
+  // Yeni müşteri için: henüz hesabı yok, onayla birlikte adına açılan hesap numarası üretilir (global/kart numarası formatı).
   function custHesapNoUret() {
     const blok = () => String(Math.floor(1000 + Math.random() * 9000));
-    return `TR${Math.floor(10 + Math.random() * 89)} 00${Math.floor(10 + Math.random() * 89)} ${blok()} ${blok()} ${blok()} ${blok()}`;
+    return `${blok()} ${blok()} ${blok()} ${blok()}`;
+  }
+
+  // Girilen telefon numarasının orta kısmını gizler, sadece ilk 4 ve son 2 hane görünür kalır.
+  function custTelefonMaskele(tel) {
+    const temiz = (tel || '').trim();
+    if (temiz.length < 6) return DEMO_TELEFON_MASKELI;
+    return temiz.slice(0, 4) + ' *** ** ' + temiz.slice(-2);
   }
 
   function custAktifHesapNo() {
@@ -1165,8 +1176,10 @@
     const tutar = Number(document.getElementById('cust1bTutar').value);
     const vade = Number(document.getElementById('cust1bVade').value);
     const amac = document.getElementById('cust1bAmac').value;
+    const telefon = document.getElementById('cust1bTelefon').value;
     const faiz = custOranHesapla(false);
     const borcOdemesi = Math.round(gelir * 0.15);
+    custTelefon = telefon;
 
     custPayload = {
       Age: yas, MaritalStatus: medeni, EducationLevel: egitim, EmploymentStatus: istihdam,
@@ -1280,14 +1293,26 @@
       document.getElementById('sonucDevamBtn').addEventListener('click', () => custGoto('custStep2'));
       document.getElementById('sonucGeriBtn').addEventListener('click', () => custGoto('custStepOdeme'));
     } else {
+      const oneri = sonuc.onay_onerisi;
       kapsayici.innerHTML = `
         <div class="cust-result-icon onay-kirmizi">✕</div>
         <div class="cust-result-title">Başvurunuz onaylanmadı</div>
         <div class="cust-result-sub">Talep ettiğiniz koşullarla şu an onay veremiyoruz.</div>
-        ${mlOneriHtml(sonuc.onay_onerisi)}
-        <button type="button" class="ml-submit-btn cust-restart-btn" id="custRestartBtn" style="margin-top:20px;">Yeni Başvuru</button>`;
+        ${mlOneriHtml(oneri)}
+        ${oneri ? `<button type="button" class="ml-submit-btn" id="oneriDevamBtn" style="margin-top:14px;">Önerilenle Devam Et</button>` : ''}
+        <button type="button" class="ml-submit-btn cust-restart-btn" id="custRestartBtn" style="margin-top:${oneri ? '10px' : '20px'};">Yeni Başvuru</button>`;
+      if (oneri) {
+        document.getElementById('oneriDevamBtn').addEventListener('click', () => {
+          custPayload.LoanAmount = oneri.onerilen_tutar;
+          custPayload.LoanDuration = oneri.onerilen_vade;
+          custPayload.NewCalculatedMonthlyPayment = custYeniPayment(oneri.onerilen_tutar, oneri.onerilen_vade, custPayload.InterestRate);
+          custOdemePlanGoster();
+          custGoto('custStepOdeme');
+        });
+      }
       document.getElementById('custRestartBtn').addEventListener('click', () => {
         custYeniHesapNo = null;
+        custTelefon = '';
         loginScreen.classList.remove('hidden');
         customerRoot.classList.add('hidden');
         gosterKart(roleCard);
@@ -1319,6 +1344,11 @@
     document.getElementById('aktarAciklama').textContent = yeniMusteri
       ? `Onayınızla birlikte APEX Capital bünyesinde adınıza bir hesap açılmıştır. ${tutar} tutarındaki krediniz bu hesaba aktarılacaktır. Bu işlem sonrasında geri alınamaz — onaylıyor musunuz?`
       : `${tutar} tutarındaki krediniz kayıtlı hesabınıza aktarılacaktır. Bu işlem sonrasında geri alınamaz — onaylıyor musunuz?`;
+
+    const telefonMaskeli = yeniMusteri ? custTelefonMaskele(custTelefon) : DEMO_TELEFON_MASKELI;
+    document.getElementById('aktarGuvenlikNot').innerHTML =
+      `${telefonMaskeli} numaralı telefonunuza tek kullanımlık bir şifre gönderilmiştir. Gelen şifre ile giriş yaparak hesabınıza erişebilirsiniz.<br>
+       Güvenlik doğrulamasından geçtikten sonra hesabın tam kullanımını sağlayabilirsiniz.`;
   }
 
   document.getElementById('aktarEvetBtn').addEventListener('click', () => {
@@ -1355,6 +1385,7 @@
     }
     document.getElementById('custRestartBtn2').addEventListener('click', () => {
       custYeniHesapNo = null;
+      custTelefon = '';
       loginScreen.classList.remove('hidden');
       customerRoot.classList.add('hidden');
       gosterKart(roleCard);
