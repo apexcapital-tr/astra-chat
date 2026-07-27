@@ -957,8 +957,22 @@
         <div class="ml-stat"><span>Aylık ödeme</span><b>${sonuc.odeme_plani.aylik_odeme.toLocaleString('tr-TR')}</b></div>
         <div class="ml-stat"><span>Taksit sayısı</span><b>${sonuc.odeme_plani.taksit_sayisi}</b></div>
         <div class="ml-stat"><span>Toplam geri ödeme</span><b>${sonuc.odeme_plani.toplam_geri_odeme.toLocaleString('tr-TR')}</b></div>
-      </div>`;
+      </div>
+      ${sonuc.onay === 0 ? mlOneriHtml(sonuc.onay_onerisi) : ''}`;
     kart.classList.remove('hidden');
+  }
+
+  function mlOneriHtml(oneri) {
+    if (!oneri) {
+      return `<div class="ml-odeme-baslik">Onay önerisi</div>
+        <div class="ml-hata">Sadece tutar/vade değişikliği bu profil için onay sağlamıyor — başvurunun başka yönlerinin de gözden geçirilmesi gerekir.</div>`;
+    }
+    return `<div class="ml-odeme-baslik">Onay için öneri</div>
+      <div class="ml-sonuc-grid">
+        <div class="ml-stat"><span>Önerilen tutar</span><b>${oneri.onerilen_tutar.toLocaleString('tr-TR')}</b></div>
+        <div class="ml-stat"><span>Önerilen vade</span><b>${oneri.onerilen_vade} ay</b></div>
+        <div class="ml-stat"><span>Onay olasılığı</span><b>${(oneri.onay_olasiligi * 100).toFixed(1)}%</b></div>
+      </div>`;
   }
 
   const navChatBtn = document.getElementById('navChatBtn');
