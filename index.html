@@ -223,6 +223,7 @@
   .ml-sonuc-badge.onay-yesil{background:rgba(74,197,187,.16); color:#4AC5BB; border:1px solid rgba(74,197,187,.35);}
   .ml-sonuc-badge.onay-kirmizi{background:rgba(224,102,90,.16); color:#e0665a; border:1px solid rgba(224,102,90,.35);}
   .ml-sonuc-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:6px;}
+  .ml-sonuc-grid-2{grid-template-columns:repeat(2,1fr);}
   .ml-stat{background:#0f221c; border-radius:8px; padding:9px 10px; border:1px solid transparent;}
   .ml-stat span{display:block; font-size:10.5px; color:var(--muted); margin-bottom:3px;}
   .ml-stat b{font-size:15px; color:var(--text);}
@@ -864,8 +865,6 @@
       { ad: 'Experience', etiket: 'Deneyim (yıl)', varsayilan: 22 },
       { ad: 'NumberOfDependents', etiket: 'Bakmakla yükümlü kişi sayısı', varsayilan: 2 },
       { ad: 'JobTenure', etiket: 'İş süresi (yıl)', varsayilan: 11 },
-      { ad: 'MaritalStatus', etiket: 'Medeni durum', secim: ['Married', 'Single', 'Divorced', 'Widowed'] },
-      { ad: 'EducationLevel', etiket: 'Eğitim düzeyi', secim: ['Associate', 'Bachelor', 'Doctorate', 'High School', 'Master'], varsayilan: 'Master' },
       { ad: 'EmploymentStatus', etiket: 'İstihdam durumu', secim: ['Employed', 'Self-Employed', 'Unemployed'] },
       { ad: 'HomeOwnershipStatus', etiket: 'Ev sahipliği durumu', secim: ['Mortgage', 'Other', 'Own', 'Rent'], varsayilan: 'Own' },
     ]},
@@ -961,10 +960,11 @@
     }
     return `<div class="ml-oneri-panel">
       <div class="ml-odeme-baslik">Onay için öneri</div>
-      <div class="ml-sonuc-grid">
+      <div class="ml-sonuc-grid ml-sonuc-grid-2">
         <div class="ml-stat renk-yesil"><span>Önerilen tutar</span><b>${oneri.onerilen_tutar.toLocaleString('tr-TR')}</b></div>
         <div class="ml-stat renk-yesil"><span>Önerilen vade</span><b>${oneri.onerilen_vade} ay</b></div>
-        <div class="ml-stat renk-yesil"><span>Onay olasılığı</span><b>${(oneri.onay_olasiligi * 100).toFixed(1)}%</b></div>
+        <div class="ml-stat renk-yesil"><span>Önerilen aylık ödeme</span><b>${oneri.onerilen_aylik_odeme.toLocaleString('tr-TR')}</b></div>
+        <div class="ml-stat renk-yesil"><span>Toplam geri ödeme</span><b>${oneri.onerilen_toplam_geri_odeme.toLocaleString('tr-TR')}</b></div>
       </div>
     </div>`;
   }
@@ -988,9 +988,9 @@
         </div>
         <div class="ml-odeme-baslik">Örnek ödeme planı</div>
         <div class="ml-sonuc-grid">
+          <div class="ml-stat"><span>Talep edilen tutar</span><b>${sonuc.odeme_plani.talep_edilen_tutar.toLocaleString('tr-TR')}</b></div>
           <div class="ml-stat"><span>Aylık ödeme</span><b>${sonuc.odeme_plani.aylik_odeme.toLocaleString('tr-TR')}</b></div>
           <div class="ml-stat"><span>Taksit sayısı</span><b>${sonuc.odeme_plani.taksit_sayisi}</b></div>
-          <div class="ml-stat"><span>Toplam geri ödeme</span><b>${sonuc.odeme_plani.toplam_geri_odeme.toLocaleString('tr-TR')}</b></div>
         </div>
         ${sonuc.onay === 0 ? mlOneriHtml(sonuc.onay_onerisi) : ''}`;
     }
@@ -1033,7 +1033,7 @@
   const mlSubmitBtn = document.getElementById('mlSubmitBtn');
   if (mlSubmitBtn) {
     mlSubmitBtn.addEventListener('click', async () => {
-      const veri = {};
+      const veri = { MaritalStatus: 'Married', EducationLevel: 'Bachelor' };
       document.querySelectorAll('#mlFormAlanlari [data-alan]').forEach(el => {
         veri[el.dataset.alan] = el.dataset.sayi ? Number(el.value) : (el.tagName === 'SELECT' ? el.value : Number(el.value));
       });
