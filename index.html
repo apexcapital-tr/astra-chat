@@ -202,6 +202,34 @@
   @keyframes shimmer{0%{left:-60%;} 45%{left:130%;} 100%{left:130%;}}
 
   .login-foot{margin-top:18px; font-size:10.5px; letter-spacing:1.5px; color:var(--accent); opacity:.65;}
+
+  /* ---- Yönetici ML tahmin formu ---- */
+  .ml-nav{display:flex; gap:6px; margin-left:auto;}
+  .ml-nav-btn{background:transparent; border:1px solid var(--border); color:var(--muted); font-size:12px; padding:7px 12px; border-radius:8px; cursor:pointer;}
+  .ml-nav-btn.active{background:var(--accent); color:var(--panel); border-color:var(--accent); font-weight:600;}
+  #chatView{flex:1; display:flex; flex-direction:column; min-height:0;}
+  #mlPanel{flex:1; overflow-y:auto; padding:16px 18px;}
+  #mlPanel.hidden{display:none;}
+  .ml-section-title{color:var(--title); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin:16px 0 8px;}
+  .ml-section-title:first-child{margin-top:0;}
+  .ml-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .ml-field{display:flex; flex-direction:column; gap:4px;}
+  .ml-field label{font-size:11px; color:var(--muted);}
+  .ml-field input, .ml-field select{background:#0f221c; border:1px solid var(--border); color:var(--text); border-radius:7px; padding:8px 10px; font-size:13px; outline:none;}
+  .ml-field input:focus, .ml-field select:focus{border-color:var(--accent);}
+  .ml-submit-btn{width:100%; margin-top:18px; background:var(--accent); color:var(--panel); border:none; font-weight:700; font-size:14px; padding:12px; border-radius:10px; cursor:pointer;}
+  .ml-submit-btn:disabled{opacity:.6; cursor:default;}
+  .ml-sonuc-kart{margin-top:16px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px;}
+  .ml-sonuc-kart.hidden{display:none;}
+  .ml-sonuc-badge{display:inline-block; font-size:13px; font-weight:700; padding:6px 14px; border-radius:8px; margin-bottom:12px;}
+  .ml-sonuc-badge.onay-yesil{background:rgba(74,197,187,.15); color:#4AC5BB;}
+  .ml-sonuc-badge.onay-kirmizi{background:rgba(224,102,90,.15); color:#e0665a;}
+  .ml-sonuc-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:6px;}
+  .ml-stat{background:#0f221c; border-radius:8px; padding:8px 10px;}
+  .ml-stat span{display:block; font-size:10.5px; color:var(--muted); margin-bottom:3px;}
+  .ml-stat b{font-size:14px; color:var(--text);}
+  .ml-odeme-baslik{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin:12px 0 6px;}
+  .ml-hata{color:#e0665a; font-size:13px;}
 </style>
 </head>
 <body>
@@ -332,20 +360,32 @@
       <p class="brand"><span class="dot" id="statusDot"></span>APEX Capital</p>
       <h1>Astra</h1>
     </div>
-  </div>
-
-  <div class="messages" id="messages">
-    <div class="msg bot">Merhaba, ben Astra. APEX Capital'in kredi asistanıyım — kredilerle ilgili sorularını yanıtlamak için buradayım. Nasıl yardımcı olabilirim?</div>
-    <div class="suggestions" id="suggestions">
-      <button class="suggestion-chip" type="button">Ortalama kredi tutarı ne?</button>
-      <button class="suggestion-chip" type="button">Yıllara göre başvuru sayısı nasıl değişti?</button>
-      <button class="suggestion-chip" type="button">En yüksek kredi skoru kaç?</button>
+    <div class="ml-nav">
+      <button class="ml-nav-btn active" type="button" id="navChatBtn">Sohbet</button>
+      <button class="ml-nav-btn" type="button" id="navMlBtn">ML Tahmin</button>
     </div>
   </div>
 
-  <div class="inputbar">
-    <input id="input" type="text" placeholder="Örn: ortalama kredi tutarı ne?" autocomplete="off">
-    <button id="sendBtn">Gönder</button>
+  <div id="chatView">
+    <div class="messages" id="messages">
+      <div class="msg bot">Merhaba, ben Astra. APEX Capital'in kredi asistanıyım — kredilerle ilgili sorularını yanıtlamak için buradayım. Nasıl yardımcı olabilirim?</div>
+      <div class="suggestions" id="suggestions">
+        <button class="suggestion-chip" type="button">Ortalama kredi tutarı ne?</button>
+        <button class="suggestion-chip" type="button">Yıllara göre başvuru sayısı nasıl değişti?</button>
+        <button class="suggestion-chip" type="button">En yüksek kredi skoru kaç?</button>
+      </div>
+    </div>
+
+    <div class="inputbar">
+      <input id="input" type="text" placeholder="Örn: ortalama kredi tutarı ne?" autocomplete="off">
+      <button id="sendBtn">Gönder</button>
+    </div>
+  </div>
+
+  <div id="mlPanel" class="hidden">
+    <div id="mlFormAlanlari"></div>
+    <button class="ml-submit-btn" type="button" id="mlSubmitBtn">Tahmin Et</button>
+    <div class="ml-sonuc-kart hidden" id="mlSonucKart"></div>
   </div>
 </div>
 
@@ -804,6 +844,167 @@
       customerRoot.classList.remove('hidden');
     }, 650);
   });
+
+  // --- Yönetici ML tahmin formu ---
+  // /kredi_tahmin FastAPI uç noktasına doğrudan bağlanır (admin_login gibi, n8n'e gerek yok).
+  const ML_ALANLAR = [
+    { grup: 'Kişisel', alanlar: [
+      { ad: 'Age', etiket: 'Yaş', varsayilan: 45 },
+      { ad: 'Experience', etiket: 'Deneyim (yıl)', varsayilan: 22 },
+      { ad: 'NumberOfDependents', etiket: 'Bakmakla yükümlü kişi sayısı', varsayilan: 2 },
+      { ad: 'JobTenure', etiket: 'İş süresi (yıl)', varsayilan: 11 },
+      { ad: 'MaritalStatus', etiket: 'Medeni durum', secim: ['Married', 'Single', 'Divorced', 'Widowed'] },
+      { ad: 'EducationLevel', etiket: 'Eğitim düzeyi', secim: ['Associate', 'Bachelor', 'Doctorate', 'High School', 'Master'], varsayilan: 'Master' },
+      { ad: 'EmploymentStatus', etiket: 'İstihdam durumu', secim: ['Employed', 'Self-Employed', 'Unemployed'] },
+      { ad: 'HomeOwnershipStatus', etiket: 'Ev sahipliği durumu', secim: ['Mortgage', 'Other', 'Own', 'Rent'], varsayilan: 'Own' },
+    ]},
+    { grup: 'Gelir ve varlık', alanlar: [
+      { ad: 'AnnualIncome', etiket: 'Yıllık gelir', varsayilan: 39948 },
+      { ad: 'MonthlyIncome', etiket: 'Aylık gelir', varsayilan: 3329 },
+      { ad: 'NetWorth', etiket: 'Net varlık', varsayilan: 126928 },
+      { ad: 'TotalAssets', etiket: 'Toplam varlık', varsayilan: 146111 },
+      { ad: 'TotalLiabilities', etiket: 'Toplam yükümlülük', varsayilan: 19183 },
+      { ad: 'SavingsAccountBalance', etiket: 'Tasarruf hesabı bakiyesi', varsayilan: 7632 },
+      { ad: 'CheckingAccountBalance', etiket: 'Vadesiz hesap bakiyesi', varsayilan: 1202 },
+    ]},
+    { grup: 'Kredi geçmişi', alanlar: [
+      { ad: 'CreditScore', etiket: 'Kredi skoru', varsayilan: 617 },
+      { ad: 'PaymentHistory', etiket: 'Ödeme geçmişi (puan)', varsayilan: 29 },
+      { ad: 'LengthOfCreditHistory', etiket: 'Kredi geçmişi süresi (yıl)', varsayilan: 9 },
+      { ad: 'NumberOfOpenCreditLines', etiket: 'Açık kredi hattı sayısı', varsayilan: 1 },
+      { ad: 'NumberOfCreditInquiries', etiket: 'Kredi sorgulama sayısı', varsayilan: 2 },
+      { ad: 'CreditCardUtilizationRate', etiket: 'Kredi kartı kullanım oranı (0-1)', varsayilan: 0.354417919 },
+      { ad: 'UtilityBillsPaymentHistory', etiket: 'Fatura ödeme geçmişi (0-1)', varsayilan: 0.724972046 },
+      { ad: 'BankruptcyHistory', etiket: 'İflas geçmişi', secim: ['0', '1'], secimEtiket: { '0': 'Yok', '1': 'Var' }, sayiSecim: true },
+      { ad: 'PreviousLoanDefaults', etiket: 'Önceki kredi temerrüdü', secim: ['0', '1'], secimEtiket: { '0': 'Yok', '1': 'Var' }, sayiSecim: true },
+    ]},
+    { grup: 'Borç durumu', alanlar: [
+      { ad: 'MonthlyDebtPayments', etiket: 'Aylık borç ödemesi', varsayilan: 183 },
+      { ad: 'DebtToIncomeRatio', etiket: 'Borç/gelir oranı (0-1)', varsayilan: 0.3583356 },
+      { ad: 'TotalDebtToIncomeRatio', etiket: 'Toplam borç/gelir oranı (0-1)', varsayilan: 0.181077198 },
+    ]},
+    { grup: 'Talep edilen kredi', alanlar: [
+      { ad: 'LoanAmount', etiket: 'Kredi tutarı', varsayilan: 13152 },
+      { ad: 'LoanDuration', etiket: 'Vade (ay)', varsayilan: 48 },
+      { ad: 'LoanPurpose', etiket: 'Kredi amacı', secim: ['Auto', 'Debt Consolidation', 'Education', 'Home', 'Other'], varsayilan: 'Home' },
+      { ad: 'InterestRate', etiket: 'Faiz oranı (0-1, örn 0.22)', varsayilan: 0.22758963 },
+      { ad: 'BaseInterestRate', etiket: 'Baz faiz oranı (0-1)', varsayilan: 0.199652 },
+      { ad: 'NewCalculatedMonthlyPayment', etiket: 'Hesaplanan aylık ödeme (referans)', varsayilan: 289.55 },
+    ]},
+  ];
+
+  function mlFormOlustur() {
+    const kapsayici = document.getElementById('mlFormAlanlari');
+    if (!kapsayici || kapsayici.childElementCount) return;
+    ML_ALANLAR.forEach(blok => {
+      const baslik = document.createElement('div');
+      baslik.className = 'ml-section-title';
+      baslik.textContent = blok.grup;
+      kapsayici.appendChild(baslik);
+
+      const grid = document.createElement('div');
+      grid.className = 'ml-grid';
+      blok.alanlar.forEach(alan => {
+        const wrap = document.createElement('div');
+        wrap.className = 'ml-field';
+        const label = document.createElement('label');
+        label.textContent = alan.etiket;
+        wrap.appendChild(label);
+
+        let girdi;
+        if (alan.secim) {
+          girdi = document.createElement('select');
+          alan.secim.forEach(sec => {
+            const opt = document.createElement('option');
+            opt.value = sec;
+            opt.textContent = alan.secimEtiket ? alan.secimEtiket[sec] : sec;
+            girdi.appendChild(opt);
+          });
+          if (alan.varsayilan !== undefined) girdi.value = String(alan.varsayilan);
+        } else {
+          girdi = document.createElement('input');
+          girdi.type = 'number';
+          girdi.step = 'any';
+          if (alan.varsayilan !== undefined) girdi.value = alan.varsayilan;
+        }
+        girdi.id = 'ml_' + alan.ad;
+        girdi.dataset.alan = alan.ad;
+        if (alan.sayiSecim) girdi.dataset.sayi = '1';
+        wrap.appendChild(girdi);
+        grid.appendChild(wrap);
+      });
+      kapsayici.appendChild(grid);
+    });
+  }
+
+  function mlSonucGoster(sonuc) {
+    const kart = document.getElementById('mlSonucKart');
+    if (sonuc.hata) {
+      kart.innerHTML = `<div class="ml-hata">${sonuc.eksik_alanlar ? sonuc.hata + ' (' + sonuc.eksik_alanlar.join(', ') + ')' : sonuc.hata}</div>`;
+      kart.classList.remove('hidden');
+      return;
+    }
+    const onayRenk = sonuc.onay === 1 ? 'onay-yesil' : 'onay-kirmizi';
+    kart.innerHTML = `
+      <div class="ml-sonuc-badge ${onayRenk}">${sonuc.onay_metni}</div>
+      <div class="ml-sonuc-grid">
+        <div class="ml-stat"><span>Onay olasılığı</span><b>${(sonuc.onay_olasiligi * 100).toFixed(1)}%</b></div>
+        <div class="ml-stat"><span>Risk skoru</span><b>${sonuc.risk_skoru}</b></div>
+        <div class="ml-stat"><span>Risk bandı</span><b>${sonuc.risk_bandi}</b></div>
+      </div>
+      <div class="ml-odeme-baslik">Örnek ödeme planı</div>
+      <div class="ml-sonuc-grid">
+        <div class="ml-stat"><span>Aylık ödeme</span><b>${sonuc.odeme_plani.aylik_odeme.toLocaleString('tr-TR')}</b></div>
+        <div class="ml-stat"><span>Taksit sayısı</span><b>${sonuc.odeme_plani.taksit_sayisi}</b></div>
+        <div class="ml-stat"><span>Toplam geri ödeme</span><b>${sonuc.odeme_plani.toplam_geri_odeme.toLocaleString('tr-TR')}</b></div>
+      </div>`;
+    kart.classList.remove('hidden');
+  }
+
+  const navChatBtn = document.getElementById('navChatBtn');
+  const navMlBtn = document.getElementById('navMlBtn');
+  const chatView = document.getElementById('chatView');
+  const mlPanel = document.getElementById('mlPanel');
+  if (navChatBtn && navMlBtn) {
+    navChatBtn.addEventListener('click', () => {
+      navChatBtn.classList.add('active');
+      navMlBtn.classList.remove('active');
+      chatView.style.display = 'flex';
+      mlPanel.classList.add('hidden');
+    });
+    navMlBtn.addEventListener('click', () => {
+      navMlBtn.classList.add('active');
+      navChatBtn.classList.remove('active');
+      chatView.style.display = 'none';
+      mlPanel.classList.remove('hidden');
+      mlFormOlustur();
+    });
+  }
+
+  const mlSubmitBtn = document.getElementById('mlSubmitBtn');
+  if (mlSubmitBtn) {
+    mlSubmitBtn.addEventListener('click', async () => {
+      const veri = {};
+      document.querySelectorAll('#mlFormAlanlari [data-alan]').forEach(el => {
+        veri[el.dataset.alan] = el.dataset.sayi ? Number(el.value) : (el.tagName === 'SELECT' ? el.value : Number(el.value));
+      });
+      mlSubmitBtn.disabled = true;
+      mlSubmitBtn.textContent = 'Hesaplanıyor...';
+      try {
+        const res = await fetch(`${FASTAPI_BASE_URL}/kredi_tahmin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(veri),
+        });
+        const sonuc = await res.json();
+        mlSonucGoster(sonuc);
+      } catch (err) {
+        mlSonucGoster({ hata: 'Sunucuya bağlanılamadı, tekrar deneyin.' });
+      }
+      mlSubmitBtn.disabled = false;
+      mlSubmitBtn.textContent = 'Tahmin Et';
+    });
+  }
 
   // --- Arka plan animasyonu: yavaşça yükselen altın/adaçayı parçacıkları ---
   (function () {
