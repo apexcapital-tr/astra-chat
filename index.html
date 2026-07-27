@@ -247,6 +247,23 @@
   /* ---- Müşteri kredi başvuru akışı ---- */
   .cust-body{flex:1; overflow-y:auto; padding:18px 20px;}
   .cust-step.hidden{display:none;}
+  .cust-step{animation:custFadeIn .38s ease;}
+  @keyframes custFadeIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+  .cust-progress{display:flex; align-items:flex-start; justify-content:center; margin-bottom:22px;}
+  .cust-progress-step{display:flex; flex-direction:column; align-items:center; gap:6px; width:76px;}
+  .cust-progress-circle{
+    width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:#0f221c; border:1px solid var(--border); color:var(--muted); font-size:12.5px; font-weight:700;
+    transition:background .35s, border-color .35s, color .35s, transform .35s;
+  }
+  .cust-progress-label{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; text-align:center; transition:color .35s;}
+  .cust-progress-line{flex:1; height:2px; background:var(--border); margin:14px 6px 0; max-width:40px; transition:background .35s;}
+  .cust-progress-step.aktif .cust-progress-circle{background:var(--accent); border-color:var(--accent); color:var(--panel); transform:scale(1.12);}
+  .cust-progress-step.aktif .cust-progress-label{color:var(--title); font-weight:600;}
+  .cust-progress-step.tamam .cust-progress-circle{background:transparent; border-color:var(--accent); color:var(--accent);}
+  .cust-progress-step.tamam .cust-progress-label{color:var(--accent);}
+  .cust-progress-line.tamam{background:var(--accent);}
   .cust-question{color:var(--title); font-size:15px; font-weight:600; margin:8px 0 16px; text-align:center;}
   .cust-choice-row{display:flex; flex-direction:column; gap:10px;}
   .cust-secondary-btn{background:transparent; border:1px solid var(--border); color:var(--text);}
@@ -255,11 +272,16 @@
   .cust-back-btn:hover{color:var(--text);}
   .cust-check-row{display:flex; align-items:center; gap:9px; background:#0f221c; border:1px solid var(--border); border-radius:9px; padding:11px 13px; margin-bottom:9px; font-size:13.5px; color:var(--text); cursor:pointer;}
   .cust-check-row input{width:16px; height:16px; accent-color:var(--accent);}
-  .cust-result-icon{width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px;}
-  .cust-result-icon.onay-yesil{background:var(--accent); color:var(--panel);}
-  .cust-result-icon.onay-kirmizi{background:rgba(224,102,90,.2); color:#e0665a;}
-  .cust-result-title{text-align:center; color:var(--title); font-size:16px; font-weight:600; margin-bottom:4px;}
-  .cust-result-sub{text-align:center; color:var(--muted); font-size:13px; margin-bottom:16px;}
+  .cust-result-icon{
+    width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    margin:6px auto 16px; font-size:28px; animation:custPopIn .45s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes custPopIn{from{opacity:0; transform:scale(.4);} to{opacity:1; transform:scale(1);}}
+  .cust-result-icon.onay-yesil{background:var(--accent); color:var(--panel); box-shadow:0 0 0 8px rgba(216,154,24,.12);}
+  .cust-result-icon.onay-kirmizi{background:rgba(224,102,90,.2); color:#e0665a; box-shadow:0 0 0 8px rgba(224,102,90,.08);}
+  .cust-result-title{text-align:center; color:var(--title); font-size:17px; font-weight:600; margin-bottom:4px;}
+  .cust-result-sub{text-align:center; color:var(--muted); font-size:13px; margin-bottom:18px;}
+  .cust-restart-btn{background:transparent; border:1px solid var(--border); color:var(--text);}
 </style>
 </head>
 <body>
@@ -393,6 +415,23 @@
     </div>
   </div>
   <div class="cust-body" id="custBody">
+
+    <div class="cust-progress" id="custProgress">
+      <div class="cust-progress-step" data-adim="1">
+        <div class="cust-progress-circle">1</div>
+        <div class="cust-progress-label">Başvuru</div>
+      </div>
+      <div class="cust-progress-line"></div>
+      <div class="cust-progress-step" data-adim="2">
+        <div class="cust-progress-circle">2</div>
+        <div class="cust-progress-label">Belge Onayı</div>
+      </div>
+      <div class="cust-progress-line"></div>
+      <div class="cust-progress-step" data-adim="3">
+        <div class="cust-progress-circle">3</div>
+        <div class="cust-progress-label">Sonuç</div>
+      </div>
+    </div>
 
     <div class="cust-step hidden" id="custStep1a">
       <div class="cust-info">Kimlik, gelir ve kredi geçmişi bilgileriniz sistemimizde güvenle kayıtlıdır — tekrar girmenize gerek yok.</div>
@@ -983,9 +1022,24 @@
   // --- Müşteri kredi başvuru akışı ---
   let custPayload = null;
 
+  const CUST_ADIM_HARITASI = { custStep1a: 1, custStep1b: 1, custStep2: 2, custStep3: 3 };
+
+  function custSetProgress(adim) {
+    document.querySelectorAll('.cust-progress-step').forEach(el => {
+      const n = Number(el.dataset.adim);
+      el.classList.remove('aktif', 'tamam');
+      if (n < adim) el.classList.add('tamam');
+      else if (n === adim) el.classList.add('aktif');
+    });
+    document.querySelectorAll('.cust-progress-line').forEach((el, i) => {
+      el.classList.toggle('tamam', i + 1 < adim);
+    });
+  }
+
   function custGoto(id) {
     document.querySelectorAll('.cust-step').forEach(el => el.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
+    if (CUST_ADIM_HARITASI[id]) custSetProgress(CUST_ADIM_HARITASI[id]);
   }
 
   document.querySelectorAll('.cust-back-btn').forEach(btn => {
@@ -1110,13 +1164,23 @@
           <div class="ml-stat"><span>Aylık ödeme</span><b>${sonuc.odeme_plani.aylik_odeme.toLocaleString('tr-TR')}</b></div>
           <div class="ml-stat"><span>Taksit sayısı</span><b>${sonuc.odeme_plani.taksit_sayisi}</b></div>
           <div class="ml-stat renk-yesil"><span>Risk bandı</span><b>${sonuc.risk_bandi}</b></div>
-        </div>`;
+        </div>
+        <button type="button" class="ml-submit-btn cust-restart-btn" id="custRestartBtn" style="margin-top:20px;">Yeni Başvuru</button>`;
     } else {
       kapsayici.innerHTML = `
         <div class="cust-result-icon onay-kirmizi">✕</div>
         <div class="cust-result-title">Başvurunuz onaylanmadı</div>
         <div class="cust-result-sub">Talep ettiğiniz koşullarla şu an onay veremiyoruz.</div>
-        ${mlOneriHtml(sonuc.onay_onerisi)}`;
+        ${mlOneriHtml(sonuc.onay_onerisi)}
+        <button type="button" class="ml-submit-btn cust-restart-btn" id="custRestartBtn" style="margin-top:20px;">Yeni Başvuru</button>`;
+    }
+    const yenidenBtn = document.getElementById('custRestartBtn');
+    if (yenidenBtn) {
+      yenidenBtn.addEventListener('click', () => {
+        loginScreen.classList.remove('hidden');
+        customerRoot.classList.add('hidden');
+        gosterKart(roleCard);
+      });
     }
   }
 
