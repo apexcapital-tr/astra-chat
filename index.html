@@ -219,17 +219,29 @@
   .ml-field input:focus, .ml-field select:focus{border-color:var(--accent);}
   .ml-submit-btn{width:100%; margin-top:18px; background:var(--accent); color:var(--panel); border:none; font-weight:700; font-size:14px; padding:12px; border-radius:10px; cursor:pointer;}
   .ml-submit-btn:disabled{opacity:.6; cursor:default;}
-  .ml-sonuc-kart{margin-top:16px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px;}
-  .ml-sonuc-kart.hidden{display:none;}
   .ml-sonuc-badge{display:inline-block; font-size:13px; font-weight:700; padding:6px 14px; border-radius:8px; margin-bottom:12px;}
-  .ml-sonuc-badge.onay-yesil{background:rgba(74,197,187,.15); color:#4AC5BB;}
-  .ml-sonuc-badge.onay-kirmizi{background:rgba(224,102,90,.15); color:#e0665a;}
+  .ml-sonuc-badge.onay-yesil{background:rgba(74,197,187,.16); color:#4AC5BB; border:1px solid rgba(74,197,187,.35);}
+  .ml-sonuc-badge.onay-kirmizi{background:rgba(224,102,90,.16); color:#e0665a; border:1px solid rgba(224,102,90,.35);}
   .ml-sonuc-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:6px;}
-  .ml-stat{background:#0f221c; border-radius:8px; padding:8px 10px;}
+  .ml-stat{background:#0f221c; border-radius:8px; padding:9px 10px; border:1px solid transparent;}
   .ml-stat span{display:block; font-size:10.5px; color:var(--muted); margin-bottom:3px;}
-  .ml-stat b{font-size:14px; color:var(--text);}
-  .ml-odeme-baslik{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin:12px 0 6px;}
+  .ml-stat b{font-size:15px; color:var(--text);}
+  .ml-stat.renk-yesil{border-color:rgba(74,197,187,.3);}
+  .ml-stat.renk-yesil b{color:#4AC5BB;}
+  .ml-stat.renk-kirmizi{border-color:rgba(224,102,90,.3);}
+  .ml-stat.renk-kirmizi b{color:#e0665a;}
+  .ml-stat.renk-gold{border-color:rgba(216,154,24,.35);}
+  .ml-stat.renk-gold b{color:var(--accent);}
+  .ml-odeme-baslik{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin:14px 0 6px;}
   .ml-hata{color:#e0665a; font-size:13px;}
+  .ml-oneri-panel{margin-top:6px; padding:12px; border-radius:10px; background:rgba(74,197,187,.08); border:1px solid rgba(74,197,187,.3);}
+  .ml-oneri-panel .ml-odeme-baslik{color:#4AC5BB; margin-top:0;}
+  .ml-oneri-yok{padding:12px; border-radius:10px; background:rgba(224,102,90,.08); border:1px solid rgba(224,102,90,.25);}
+  .ml-modal-card{width:400px; max-width:92vw; max-height:85vh; overflow-y:auto;}
+  .ml-modal-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .ml-modal-header h3{margin:0;}
+  .ml-modal-close{background:transparent; border:none; color:var(--muted); font-size:20px; line-height:1; cursor:pointer; padding:0 4px;}
+  .ml-modal-close:hover{color:var(--text);}
 </style>
 </head>
 <body>
@@ -385,7 +397,6 @@
   <div id="mlPanel" class="hidden">
     <div id="mlFormAlanlari"></div>
     <button class="ml-submit-btn" type="button" id="mlSubmitBtn">Tahmin Et</button>
-    <div class="ml-sonuc-kart hidden" id="mlSonucKart"></div>
   </div>
 </div>
 
@@ -937,42 +948,66 @@
     });
   }
 
-  function mlSonucGoster(sonuc) {
-    const kart = document.getElementById('mlSonucKart');
-    if (sonuc.hata) {
-      kart.innerHTML = `<div class="ml-hata">${sonuc.eksik_alanlar ? sonuc.hata + ' (' + sonuc.eksik_alanlar.join(', ') + ')' : sonuc.hata}</div>`;
-      kart.classList.remove('hidden');
-      return;
-    }
-    const onayRenk = sonuc.onay === 1 ? 'onay-yesil' : 'onay-kirmizi';
-    kart.innerHTML = `
-      <div class="ml-sonuc-badge ${onayRenk}">${sonuc.onay_metni}</div>
-      <div class="ml-sonuc-grid">
-        <div class="ml-stat"><span>Onay olasılığı</span><b>${(sonuc.onay_olasiligi * 100).toFixed(1)}%</b></div>
-        <div class="ml-stat"><span>Risk skoru</span><b>${sonuc.risk_skoru}</b></div>
-        <div class="ml-stat"><span>Risk bandı</span><b>${sonuc.risk_bandi}</b></div>
-      </div>
-      <div class="ml-odeme-baslik">Örnek ödeme planı</div>
-      <div class="ml-sonuc-grid">
-        <div class="ml-stat"><span>Aylık ödeme</span><b>${sonuc.odeme_plani.aylik_odeme.toLocaleString('tr-TR')}</b></div>
-        <div class="ml-stat"><span>Taksit sayısı</span><b>${sonuc.odeme_plani.taksit_sayisi}</b></div>
-        <div class="ml-stat"><span>Toplam geri ödeme</span><b>${sonuc.odeme_plani.toplam_geri_odeme.toLocaleString('tr-TR')}</b></div>
-      </div>
-      ${sonuc.onay === 0 ? mlOneriHtml(sonuc.onay_onerisi) : ''}`;
-    kart.classList.remove('hidden');
+  function riskRenkSinifi(bandi) {
+    if (bandi === 'düşük') return 'renk-yesil';
+    if (bandi === 'orta') return 'renk-gold';
+    return 'renk-kirmizi';
   }
 
   function mlOneriHtml(oneri) {
     if (!oneri) {
       return `<div class="ml-odeme-baslik">Onay önerisi</div>
-        <div class="ml-hata">Sadece tutar/vade değişikliği bu profil için onay sağlamıyor — başvurunun başka yönlerinin de gözden geçirilmesi gerekir.</div>`;
+        <div class="ml-oneri-yok">Sadece tutar/vade değişikliği bu profil için onay sağlamıyor — başvurunun başka yönlerinin de gözden geçirilmesi gerekir.</div>`;
     }
-    return `<div class="ml-odeme-baslik">Onay için öneri</div>
+    return `<div class="ml-oneri-panel">
+      <div class="ml-odeme-baslik">Onay için öneri</div>
       <div class="ml-sonuc-grid">
-        <div class="ml-stat"><span>Önerilen tutar</span><b>${oneri.onerilen_tutar.toLocaleString('tr-TR')}</b></div>
-        <div class="ml-stat"><span>Önerilen vade</span><b>${oneri.onerilen_vade} ay</b></div>
-        <div class="ml-stat"><span>Onay olasılığı</span><b>${(oneri.onay_olasiligi * 100).toFixed(1)}%</b></div>
+        <div class="ml-stat renk-yesil"><span>Önerilen tutar</span><b>${oneri.onerilen_tutar.toLocaleString('tr-TR')}</b></div>
+        <div class="ml-stat renk-yesil"><span>Önerilen vade</span><b>${oneri.onerilen_vade} ay</b></div>
+        <div class="ml-stat renk-yesil"><span>Onay olasılığı</span><b>${(oneri.onay_olasiligi * 100).toFixed(1)}%</b></div>
+      </div>
+    </div>`;
+  }
+
+  function openMlSonucModal(sonuc) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    let icerik;
+    if (sonuc.hata) {
+      icerik = `<div class="ml-hata">${sonuc.eksik_alanlar ? sonuc.hata + ' (' + sonuc.eksik_alanlar.join(', ') + ')' : sonuc.hata}</div>`;
+    } else {
+      const onayRenk = sonuc.onay === 1 ? 'onay-yesil' : 'onay-kirmizi';
+      const olasilikRenk = sonuc.onay === 1 ? 'renk-yesil' : 'renk-kirmizi';
+      icerik = `
+        <div class="ml-sonuc-badge ${onayRenk}">${sonuc.onay_metni}</div>
+        <div class="ml-sonuc-grid">
+          <div class="ml-stat ${olasilikRenk}"><span>Onay olasılığı</span><b>${(sonuc.onay_olasiligi * 100).toFixed(1)}%</b></div>
+          <div class="ml-stat ${riskRenkSinifi(sonuc.risk_bandi)}"><span>Risk skoru</span><b>${sonuc.risk_skoru}</b></div>
+          <div class="ml-stat ${riskRenkSinifi(sonuc.risk_bandi)}"><span>Risk bandı</span><b>${sonuc.risk_bandi}</b></div>
+        </div>
+        <div class="ml-odeme-baslik">Örnek ödeme planı</div>
+        <div class="ml-sonuc-grid">
+          <div class="ml-stat"><span>Aylık ödeme</span><b>${sonuc.odeme_plani.aylik_odeme.toLocaleString('tr-TR')}</b></div>
+          <div class="ml-stat"><span>Taksit sayısı</span><b>${sonuc.odeme_plani.taksit_sayisi}</b></div>
+          <div class="ml-stat"><span>Toplam geri ödeme</span><b>${sonuc.odeme_plani.toplam_geri_odeme.toLocaleString('tr-TR')}</b></div>
+        </div>
+        ${sonuc.onay === 0 ? mlOneriHtml(sonuc.onay_onerisi) : ''}`;
+    }
+
+    overlay.innerHTML = `
+      <div class="modal-card ml-modal-card">
+        <div class="ml-modal-header">
+          <h3>Kredi değerlendirme sonucu</h3>
+          <button class="ml-modal-close" id="mlModalClose" aria-label="Kapat">&times;</button>
+        </div>
+        ${icerik}
       </div>`;
+    document.querySelector('.app').appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('#mlModalClose').addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
   }
 
   const navChatBtn = document.getElementById('navChatBtn');
@@ -1011,9 +1046,9 @@
           body: JSON.stringify(veri),
         });
         const sonuc = await res.json();
-        mlSonucGoster(sonuc);
+        openMlSonucModal(sonuc);
       } catch (err) {
-        mlSonucGoster({ hata: 'Sunucuya bağlanılamadı, tekrar deneyin.' });
+        openMlSonucModal({ hata: 'Sunucuya bağlanılamadı, tekrar deneyin.' });
       }
       mlSubmitBtn.disabled = false;
       mlSubmitBtn.textContent = 'Tahmin Et';
