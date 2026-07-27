@@ -623,7 +623,7 @@
           <button class="primary" id="mailSend">Gönder</button>
         </div>
       </div>`;
-    document.querySelector('.app').appendChild(overlay);
+    document.getElementById('appRoot').appendChild(overlay);
 
     const input = overlay.querySelector('#mailInput');
     const errorEl = overlay.querySelector('#mailError');
@@ -1003,7 +1003,7 @@
         </div>
         ${icerik}
       </div>`;
-    document.querySelector('.app').appendChild(overlay);
+    document.getElementById('appRoot').appendChild(overlay);
 
     const close = () => overlay.remove();
     overlay.querySelector('#mlModalClose').addEventListener('click', close);
