@@ -324,6 +324,29 @@
     <p class="login-foot" id="adminBackBtn" style="cursor:pointer;">‹ GERİ DÖN</p>
   </div>
 
+  <!-- Kredi başvurusu öncesi: mevcut müşteri mi diye sorulur -->
+  <div class="login-card hidden" id="custEntryCard">
+    <div class="login-ring-wrap" id="ringWrapCustEntry">
+      <div class="login-ring"></div>
+      <svg class="logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="apexGoldCustEntry" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#F3E8C3"/>
+            <stop offset="1" stop-color="#D89A18"/>
+          </linearGradient>
+        </defs>
+        <polygon points="32,6 58,54 6,54" fill="none" stroke="url(#apexGoldCustEntry)" stroke-width="5" stroke-linejoin="round"/>
+        <polygon points="32,26 45,54 19,54" fill="url(#apexGoldCustEntry)"/>
+      </svg>
+    </div>
+    <p class="login-brand">Apex Capital</p>
+    <h1 class="login-title">👤 Kredi Başvurusu</h1>
+    <p class="login-sub">Bankamızın mevcut müşterisi misiniz?</p>
+    <button type="button" class="login-btn" id="custEntryYesBtn">Evet, müşterisiyim</button>
+    <button type="button" class="login-btn" id="custEntryNoBtn" style="background:transparent; border:1px solid var(--border); color:var(--text); margin-top:10px;">Hayır, yeni başvuruyorum</button>
+    <p class="login-foot" id="custEntryBackBtn" style="cursor:pointer;">‹ GERİ DÖN</p>
+  </div>
+
   <!-- Müşteri girişi: görsel amaçlı, sunucuda doğrulama yok -->
   <div class="login-card hidden" id="customerCard">
     <div class="login-ring-wrap" id="ringWrapCustomer">
@@ -371,14 +394,6 @@
   </div>
   <div class="cust-body" id="custBody">
 
-    <div class="cust-step" id="custStep0">
-      <p class="cust-question">Bankamızın mevcut müşterisi misiniz?</p>
-      <div class="cust-choice-row">
-        <button type="button" class="ml-submit-btn" id="custYesBtn">Evet, müşterisiyim</button>
-        <button type="button" class="ml-submit-btn cust-secondary-btn" id="custNoBtn">Hayır, yeni başvuruyorum</button>
-      </div>
-    </div>
-
     <div class="cust-step hidden" id="custStep1a">
       <div class="cust-info">Kimlik, gelir ve kredi geçmişi bilgileriniz sistemimizde güvenle kayıtlıdır — tekrar girmenize gerek yok.</div>
       <div class="ml-field">
@@ -400,7 +415,6 @@
         </select>
       </div>
       <button type="button" class="ml-submit-btn" id="cust1aNextBtn">Devam Et</button>
-      <button type="button" class="cust-back-btn" data-geri="custStep0">‹ Geri</button>
     </div>
 
     <div class="cust-step hidden" id="custStep1b">
@@ -438,7 +452,6 @@
         </select>
       </div>
       <button type="button" class="ml-submit-btn" id="cust1bNextBtn" style="margin-top:14px;">Devam Et</button>
-      <button type="button" class="cust-back-btn" data-geri="custStep0">‹ Geri</button>
     </div>
 
     <div class="cust-step hidden" id="custStep2">
@@ -883,19 +896,30 @@
   const loginScreen = document.getElementById('loginScreen');
   const roleCard = document.getElementById('roleCard');
   const adminCard = document.getElementById('adminCard');
+  const custEntryCard = document.getElementById('custEntryCard');
   const customerCard = document.getElementById('customerCard');
   const appRoot = document.getElementById('appRoot');
   const customerRoot = document.getElementById('customerRoot');
 
   function gosterKart(kart) {
-    [roleCard, adminCard, customerCard].forEach(k => k.classList.add('hidden'));
+    [roleCard, adminCard, custEntryCard, customerCard].forEach(k => k.classList.add('hidden'));
     kart.classList.remove('hidden');
   }
 
   document.getElementById('roleAdminBtn').addEventListener('click', () => gosterKart(adminCard));
-  document.getElementById('roleCustomerBtn').addEventListener('click', () => gosterKart(customerCard));
+  document.getElementById('roleCustomerBtn').addEventListener('click', () => gosterKart(custEntryCard));
   document.getElementById('adminBackBtn').addEventListener('click', () => gosterKart(roleCard));
-  document.getElementById('customerBackBtn').addEventListener('click', () => gosterKart(roleCard));
+  document.getElementById('custEntryBackBtn').addEventListener('click', () => gosterKart(roleCard));
+  document.getElementById('customerBackBtn').addEventListener('click', () => gosterKart(custEntryCard));
+
+  // Mevcut müşteri: gerçek anlamda giriş kartına geçer (TC/şifre şov).
+  document.getElementById('custEntryYesBtn').addEventListener('click', () => gosterKart(customerCard));
+  // Yeni başvuru: hesabı yok, girişe hiç gerek yok — direkt 11 soruluk forma geçer.
+  document.getElementById('custEntryNoBtn').addEventListener('click', () => {
+    loginScreen.classList.add('hidden');
+    customerRoot.classList.remove('hidden');
+    custGoto('custStep1b');
+  });
 
   // Yönetici girişi
   const adminForm = document.getElementById('adminForm');
@@ -952,7 +976,7 @@
     setTimeout(() => {
       loginScreen.classList.add('hidden');
       customerRoot.classList.remove('hidden');
-      custGoto('custStep0');
+      custGoto('custStep1a');
     }, 650);
   });
 
@@ -964,8 +988,6 @@
     document.getElementById(id).classList.remove('hidden');
   }
 
-  document.getElementById('custYesBtn').addEventListener('click', () => custGoto('custStep1a'));
-  document.getElementById('custNoBtn').addEventListener('click', () => custGoto('custStep1b'));
   document.querySelectorAll('.cust-back-btn').forEach(btn => {
     btn.addEventListener('click', () => custGoto(btn.dataset.geri));
   });
