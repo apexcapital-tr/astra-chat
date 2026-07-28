@@ -1283,10 +1283,9 @@
         <div class="cust-result-icon onay-yesil">✓</div>
         <div class="cust-result-title">Başvurunuz onaylandı</div>
         <div class="cust-result-sub">Devam etmek için belge onayı adımına geçin. Tutar bu adımda henüz hesabınıza aktarılmayacaktır.</div>
-        <div class="ml-sonuc-grid">
+        <div class="ml-sonuc-grid ml-sonuc-grid-2">
           <div class="ml-stat"><span>Talep edilen tutar</span><b>${paraFormat(sonuc.odeme_plani.talep_edilen_tutar)}</b></div>
           <div class="ml-stat"><span>Aylık ödeme</span><b>${paraFormat(sonuc.odeme_plani.aylik_odeme)}</b></div>
-          <div class="ml-stat renk-yesil"><span>Risk bandı</span><b>${sonuc.risk_bandi}</b></div>
         </div>
         <button type="button" class="ml-submit-btn" id="sonucDevamBtn" style="margin-top:16px;">Belge Onayına Geç</button>
         <button type="button" id="sonucGeriBtn" style="display:block; margin:10px auto 0; background:transparent; border:none; color:var(--muted); font-size:12px; cursor:pointer;">‹ Geri</button>`;
@@ -1376,10 +1375,9 @@
         <div class="cust-result-icon onay-yesil">✓</div>
         <div class="cust-result-title">İşlem tamamlandı</div>
         <div class="cust-result-sub">${tutar}, ${custAktifHesapNo()} numaralı hesabınıza aktarıldı.</div>
-        <div class="ml-sonuc-grid">
+        <div class="ml-sonuc-grid ml-sonuc-grid-2">
           <div class="ml-stat"><span>Aylık ödeme</span><b>${paraFormat(custSonuc.odeme_plani.aylik_odeme)}</b></div>
           <div class="ml-stat"><span>Taksit sayısı</span><b>${custSonuc.odeme_plani.taksit_sayisi}</b></div>
-          <div class="ml-stat renk-yesil"><span>Risk bandı</span><b>${custSonuc.risk_bandi}</b></div>
         </div>
         <button type="button" class="ml-submit-btn cust-restart-btn" id="custRestartBtn2" style="margin-top:20px;">Yeni Başvuru</button>`;
     } else {
