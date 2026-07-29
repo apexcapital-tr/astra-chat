@@ -442,16 +442,32 @@
     </div>
 
     <div class="cust-step hidden" id="custStep1a">
-      <div class="cust-info">Kimlik, gelir ve kredi geçmişi bilgileriniz sistemimizde güvenle kayıtlıdır — tekrar girmenize gerek yok.</div>
-      <div class="ml-field">
-        <label>Talep edilen kredi tutarı</label>
-        <input type="number" id="cust1aTutar" value="40000">
+      <div class="cust-info">Mevcut müşterimiz olduğunuz için size özel daha uygun bir faiz oranı uyguluyoruz. Güncel bilgilerinizi teyit etmeniz yeterli.</div>
+      <div class="ml-grid">
+        <div class="ml-field"><label>Yaş</label><input type="number" id="cust1aYas" value="34"></div>
+        <div class="ml-field"><label>İş süresi (yıl)</label><input type="number" id="cust1aIsSuresi" value="6"></div>
+        <div class="ml-field"><label>Medeni durum</label>
+          <select id="cust1aMedeni"><option value="Single">Bekar</option><option value="Married" selected>Evli</option><option value="Divorced">Boşanmış</option><option value="Widowed">Dul</option></select>
+        </div>
+        <div class="ml-field"><label>Eğitim düzeyi</label>
+          <select id="cust1aEgitim"><option value="High School">Lise</option><option value="Associate">Ön Lisans</option><option value="Bachelor" selected>Lisans</option><option value="Master">Yüksek Lisans</option><option value="Doctorate">Doktora</option></select>
+        </div>
+        <div class="ml-field"><label>İstihdam durumu</label>
+          <select id="cust1aIstihdam"><option value="Employed" selected>Çalışıyor</option><option value="Self-Employed">Serbest Meslek</option><option value="Unemployed">Çalışmıyor</option></select>
+        </div>
+        <div class="ml-field"><label>Ev sahipliği durumu</label>
+          <select id="cust1aEv"><option value="Own" selected>Ev Sahibi</option><option value="Mortgage">İpotekli</option><option value="Rent">Kiracı</option><option value="Other">Diğer</option></select>
+        </div>
+        <div class="ml-field"><label>Bakmakla yükümlü kişi sayısı</label><input type="number" id="cust1aBakmakla" value="1"></div>
+        <div class="ml-field"><label>Aylık gelir</label><input type="number" id="cust1aGelir" value="7000"></div>
+        <div class="ml-field"><label>Telefon numarası</label><input type="tel" id="cust1aTelefon" placeholder="05XX XXX XX XX" value="0532 111 22 33"></div>
       </div>
-      <div class="ml-field">
-        <label>Vade (ay)</label>
-        <input type="number" id="cust1aVade" value="48">
+      <div class="ml-section-title">Kredi bilgileri</div>
+      <div class="ml-grid">
+        <div class="ml-field"><label>Talep edilen kredi tutarı</label><input type="number" id="cust1aTutar" value="40000"></div>
+        <div class="ml-field"><label>Vade (ay)</label><input type="number" id="cust1aVade" value="48"></div>
       </div>
-      <div class="ml-field">
+      <div class="ml-field" style="margin-top:10px;">
         <label>Kredi amacı</label>
         <select id="cust1aAmac">
           <option value="Auto">Taşıt</option>
@@ -461,7 +477,7 @@
           <option value="Other">Diğer</option>
         </select>
       </div>
-      <button type="button" class="ml-submit-btn" id="cust1aNextBtn">Devam Et</button>
+      <button type="button" class="ml-submit-btn" id="cust1aNextBtn" style="margin-top:14px;">Devam Et</button>
     </div>
 
     <div class="cust-step hidden" id="custStep1b">
@@ -543,6 +559,25 @@
         <button type="button" class="ml-submit-btn cust-secondary-btn" id="aktarHayirBtn">Hayır, vazgeç</button>
       </div>
       <button type="button" class="cust-back-btn" data-geri="custStep2">‹ Geri</button>
+    </div>
+
+    <div class="cust-step hidden" id="custStepOtp">
+      <div class="cust-result-icon" style="background:rgba(216,154,24,.18); color:var(--accent); box-shadow:0 0 0 8px rgba(216,154,24,.08);">🔒</div>
+      <div class="cust-result-title">Doğrulama kodunu girin</div>
+      <div class="cust-result-sub" id="otpAciklama">Telefonunuza gönderilen kodu girin.</div>
+      <div style="text-align:center; margin-bottom:14px;">
+        <span style="font-size:12px; color:var(--muted);">Kalan süre: </span>
+        <b id="otpSayac" style="font-size:15px; color:var(--accent); font-variant-numeric:tabular-nums;">01:00</b>
+      </div>
+      <div class="ml-field">
+        <label>Doğrulama kodu</label>
+        <input type="text" id="otpKod" inputmode="numeric" maxlength="6" placeholder="6 haneli kod" autocomplete="off" style="letter-spacing:4px; text-align:center; font-size:18px;">
+      </div>
+      <div class="ml-hata hidden" id="otpHata">Kod hatalı, tekrar deneyin.</div>
+      <div class="cust-info" id="otpDemoNot" style="margin-top:10px;"></div>
+      <button type="button" class="ml-submit-btn" id="otpDogrulaBtn" style="margin-top:10px;">Doğrula ve Aktar</button>
+      <button type="button" class="ml-submit-btn cust-secondary-btn hidden" id="otpTekrarGonderBtn" style="margin-top:10px;">Kodu Tekrar Gönder</button>
+      <button type="button" id="otpGeriBtn" style="display:block; margin:12px auto 0; background:transparent; border:none; color:var(--muted); font-size:12px; cursor:pointer;">‹ Geri</button>
     </div>
 
     <div class="cust-step hidden" id="custStepFinal"></div>
@@ -1101,7 +1136,7 @@
     custStep1a: 1, custStep1b: 1,
     custStepOdeme: 2,
     custStep3: 3,
-    custStep2: 4, custStepAktar: 4, custStepFinal: 4,
+    custStep2: 4, custStepAktar: 4, custStepOtp: 4, custStepFinal: 4,
   };
 
   function custSetProgress(adim) {
@@ -1137,19 +1172,34 @@
   }
 
   // Mevcut müşteri: "sistemde kayıtlı" sabit demo profili.
+  // Mevcut müşteri: artık yeni müşteriyle aynı bilgileri (telefon dahil) topluyoruz,
+  // sadece kredi geçmişi verileri (skor, ödeme geçmişi vb.) sistemde zaten kayıtlı sayılıyor
+  // ve faiz oranı mevcut müşteri avantajıyla hesaplanıyor.
   document.getElementById('cust1aNextBtn').addEventListener('click', () => {
+    const yas = Number(document.getElementById('cust1aYas').value);
+    const isSuresi = Number(document.getElementById('cust1aIsSuresi').value);
+    const medeni = document.getElementById('cust1aMedeni').value;
+    const egitim = document.getElementById('cust1aEgitim').value;
+    const istihdam = document.getElementById('cust1aIstihdam').value;
+    const ev = document.getElementById('cust1aEv').value;
+    const bakmakla = Number(document.getElementById('cust1aBakmakla').value);
+    const gelir = Number(document.getElementById('cust1aGelir').value);
     const tutar = Number(document.getElementById('cust1aTutar').value);
     const vade = Number(document.getElementById('cust1aVade').value);
     const amac = document.getElementById('cust1aAmac').value;
+    const telefon = document.getElementById('cust1aTelefon').value;
     const faiz = custOranHesapla(true);
+    const borcOdemesi = Math.round(gelir * 0.05);
+    custTelefon = telefon;
 
     custPayload = {
-      Age: 34, MaritalStatus: 'Married', EducationLevel: 'Bachelor', EmploymentStatus: 'Employed',
-      HomeOwnershipStatus: 'Own', NumberOfDependents: 1, JobTenure: 6, Experience: 10,
-      AnnualIncome: 84000, MonthlyIncome: 7000,
-      SavingsAccountBalance: 15000, CheckingAccountBalance: 4000,
-      TotalAssets: 120000, TotalLiabilities: 25000, NetWorth: 95000,
-      MonthlyDebtPayments: 350, DebtToIncomeRatio: 350 / 7000, TotalDebtToIncomeRatio: 350 / 7000,
+      Age: yas, MaritalStatus: medeni, EducationLevel: egitim, EmploymentStatus: istihdam,
+      HomeOwnershipStatus: ev, NumberOfDependents: bakmakla, JobTenure: isSuresi, Experience: isSuresi + 4,
+      AnnualIncome: gelir * 12, MonthlyIncome: gelir,
+      SavingsAccountBalance: Math.round(gelir * 2.5), CheckingAccountBalance: Math.round(gelir * 0.6),
+      TotalAssets: Math.round(gelir * 17), TotalLiabilities: Math.round(gelir * 3.5),
+      NetWorth: Math.round(gelir * 17) - Math.round(gelir * 3.5),
+      MonthlyDebtPayments: borcOdemesi, DebtToIncomeRatio: borcOdemesi / gelir, TotalDebtToIncomeRatio: borcOdemesi / gelir,
       BankruptcyHistory: 0, PreviousLoanDefaults: 0,
       CreditScore: 690, NumberOfOpenCreditLines: 3, NumberOfCreditInquiries: 1,
       PaymentHistory: 35, LengthOfCreditHistory: 8, CreditCardUtilizationRate: 0.25,
@@ -1310,6 +1360,7 @@
         });
       }
       document.getElementById('custRestartBtn').addEventListener('click', () => {
+        custOtpDurdur();
         custYeniHesapNo = null;
         custTelefon = '';
         loginScreen.classList.remove('hidden');
@@ -1344,27 +1395,86 @@
       ? `Onayınızla birlikte APEX Capital bünyesinde adınıza bir hesap açılmıştır. ${tutar} tutarındaki krediniz bu hesaba aktarılacaktır. Bu işlem sonrasında geri alınamaz — onaylıyor musunuz?`
       : `${tutar} tutarındaki krediniz kayıtlı hesabınıza aktarılacaktır. Bu işlem sonrasında geri alınamaz — onaylıyor musunuz?`;
 
-    // Güvenlik/OTP bilgilendirmesi sadece henüz sistemde kayıtlı olmayan (yeni) müşteriye gösterilir.
+    // Güvenlik/OTP bilgilendirmesi: artık her iki müşteri türü de telefon numarası verdiği için ikisine de gösteriliyor.
     const guvenlikEl = document.getElementById('aktarGuvenlikNot');
-    if (yeniMusteri) {
-      const telefonMaskeli = custTelefonMaskele(custTelefon);
-      guvenlikEl.innerHTML =
-        `${telefonMaskeli} numaralı telefonunuza tek kullanımlık bir şifre gönderilmiştir. Gelen şifre ile giriş yaparak hesabınıza erişebilirsiniz.<br>
-         Güvenlik doğrulamasından geçtikten sonra hesabın tam kullanımını sağlayabilirsiniz.`;
-      guvenlikEl.classList.remove('hidden');
-    } else {
-      guvenlikEl.innerHTML = '';
-      guvenlikEl.classList.add('hidden');
-    }
+    const telefonMaskeli = custTelefonMaskele(custTelefon);
+    guvenlikEl.innerHTML =
+      `${telefonMaskeli} numaralı telefonunuza onay için tek kullanımlık bir kod gönderilecektir.<br>
+       Güvenlik doğrulamasından geçtikten sonra hesabın tam kullanımını sağlayabilirsiniz.`;
+    guvenlikEl.classList.remove('hidden');
   }
 
   document.getElementById('aktarEvetBtn').addEventListener('click', () => {
-    custFinalGoster(true);
-    custGoto('custStepFinal');
+    custOtpGoster();
+    custGoto('custStepOtp');
   });
   document.getElementById('aktarHayirBtn').addEventListener('click', () => {
     custFinalGoster(false);
     custGoto('custStepFinal');
+  });
+
+  // Adım 4 (son): telefona gönderilen tek kullanımlık kodun 60 saniyelik geri sayımla doğrulanması.
+  let custOtpKodu = '';
+  let custOtpTimerId = null;
+  let custOtpKalan = 60;
+
+  function custOtpDurdur() {
+    if (custOtpTimerId) {
+      clearInterval(custOtpTimerId);
+      custOtpTimerId = null;
+    }
+  }
+
+  function custOtpSayacGuncelle() {
+    const dakika = String(Math.floor(custOtpKalan / 60)).padStart(2, '0');
+    const saniye = String(custOtpKalan % 60).padStart(2, '0');
+    document.getElementById('otpSayac').textContent = `${dakika}:${saniye}`;
+  }
+
+  function custOtpGoster() {
+    custOtpKodu = String(Math.floor(100000 + Math.random() * 900000));
+    custOtpKalan = 60;
+    document.getElementById('otpKod').value = '';
+    document.getElementById('otpHata').classList.add('hidden');
+    document.getElementById('otpDogrulaBtn').disabled = false;
+    document.getElementById('otpDogrulaBtn').classList.remove('hidden');
+    document.getElementById('otpTekrarGonderBtn').classList.add('hidden');
+    document.getElementById('otpAciklama').textContent =
+      `${custTelefonMaskele(custTelefon)} numaralı telefonunuza gönderilen 6 haneli kodu girin.`;
+    document.getElementById('otpDemoNot').textContent = `Test ortamı — gönderilen kod önizlemesi: ${custOtpKodu}`;
+    custOtpSayacGuncelle();
+    custOtpDurdur();
+    custOtpTimerId = setInterval(() => {
+      custOtpKalan -= 1;
+      custOtpSayacGuncelle();
+      if (custOtpKalan <= 0) {
+        custOtpDurdur();
+        document.getElementById('otpDogrulaBtn').classList.add('hidden');
+        document.getElementById('otpTekrarGonderBtn').classList.remove('hidden');
+        document.getElementById('otpAciklama').textContent = 'Kodun süresi doldu. Yeni bir kod isteyin.';
+      }
+    }, 1000);
+  }
+
+  document.getElementById('otpDogrulaBtn').addEventListener('click', () => {
+    const girilen = document.getElementById('otpKod').value.trim();
+    if (girilen !== custOtpKodu) {
+      document.getElementById('otpHata').classList.remove('hidden');
+      return;
+    }
+    document.getElementById('otpHata').classList.add('hidden');
+    custOtpDurdur();
+    custFinalGoster(true);
+    custGoto('custStepFinal');
+  });
+
+  document.getElementById('otpTekrarGonderBtn').addEventListener('click', () => {
+    custOtpGoster();
+  });
+
+  document.getElementById('otpGeriBtn').addEventListener('click', () => {
+    custOtpDurdur();
+    custGoto('custStepAktar');
   });
 
   function custFinalGoster(aktarildiMi) {
@@ -1390,6 +1500,7 @@
       document.getElementById('aktarTekrarBtn').addEventListener('click', () => custGoto('custStepAktar'));
     }
     document.getElementById('custRestartBtn2').addEventListener('click', () => {
+      custOtpDurdur();
       custYeniHesapNo = null;
       custTelefon = '';
       loginScreen.classList.remove('hidden');
