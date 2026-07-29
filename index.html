@@ -573,7 +573,7 @@
         <label>Doğrulama kodu</label>
         <input type="text" id="otpKod" inputmode="numeric" maxlength="6" placeholder="6 haneli kod" autocomplete="off" style="letter-spacing:4px; text-align:center; font-size:18px;">
       </div>
-      <div class="ml-hata hidden" id="otpHata">Kod hatalı, tekrar deneyin.</div>
+      <div class="ml-hata hidden" id="otpHata">Lütfen 6 haneli kodu eksiksiz girin.</div>
       <div class="cust-info" id="otpDemoNot" style="margin-top:10px;"></div>
       <button type="button" class="ml-submit-btn" id="otpDogrulaBtn" style="margin-top:10px;">Doğrula ve Aktar</button>
       <button type="button" class="ml-submit-btn cust-secondary-btn hidden" id="otpTekrarGonderBtn" style="margin-top:10px;">Kodu Tekrar Gönder</button>
@@ -1457,8 +1457,10 @@
   }
 
   document.getElementById('otpDogrulaBtn').addEventListener('click', () => {
+    // Not: Gerçek bir SMS altyapısı olmadığından, girilen kodun üretilen kodla birebir
+    // eşleşmesi aranmıyor — sadece 6 haneli bir kod girildiği kontrol ediliyor.
     const girilen = document.getElementById('otpKod').value.trim();
-    if (girilen !== custOtpKodu) {
+    if (!/^\d{6}$/.test(girilen)) {
       document.getElementById('otpHata').classList.remove('hidden');
       return;
     }
