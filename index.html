@@ -1333,8 +1333,7 @@
         <div class="cust-result-icon onay-yesil">✓</div>
         <div class="cust-result-title">Başvurunuz onaylandı</div>
         <div class="cust-result-sub">Devam etmek için belge onayı adımına geçin. Tutar bu adımda henüz hesabınıza aktarılmayacaktır.</div>
-        ${kararAciklamaHtml(custPayload, 1)}
-        <div class="ml-sonuc-grid ml-sonuc-grid-2" style="margin-top:14px;">
+        <div class="ml-sonuc-grid ml-sonuc-grid-2">
           <div class="ml-stat"><span>Talep edilen tutar</span><b>${paraFormat(sonuc.odeme_plani.talep_edilen_tutar)}</b></div>
           <div class="ml-stat"><span>Aylık ödeme</span><b>${paraFormat(sonuc.odeme_plani.aylik_odeme)}</b></div>
         </div>
@@ -1348,7 +1347,6 @@
         <div class="cust-result-icon onay-kirmizi">✕</div>
         <div class="cust-result-title">Başvurunuz onaylanmadı</div>
         <div class="cust-result-sub">Talep ettiğiniz koşullarla şu an onay veremiyoruz.</div>
-        ${kararAciklamaHtml(custPayload, 0)}
         ${mlOneriHtml(oneri)}
         ${oneri ? `<button type="button" class="ml-submit-btn" id="oneriDevamBtn" style="margin-top:14px;">Önerilenle Devam Et</button>` : ''}
         <button type="button" class="ml-submit-btn cust-restart-btn" id="custRestartBtn" style="margin-top:${oneri ? '10px' : '20px'};">Yeni Başvuru</button>`;
@@ -1608,113 +1606,6 @@
     return 'renk-kirmizi';
   }
 
-  // Model katsayılarına güvenmiyoruz (çok-doğrusallık sorunu tespit edilmişti), bu yüzden
-  // "karar açıklaması" ham model ağırlıklarından değil, başvurunun kendi girdilerinden
-  // basit ve anlaşılır eşik kurallarıyla türetiliyor — yanıltıcı olmayan, sağlam bir yaklaşım.
-  // Geniş bir kural seti taranır, sonra sonuçla TUTARLI olacak şekilde seçilir: red ise
-  // öncelik olumsuz unsurlarda, onay ise öncelik olumlu unsurlarda — böylece "reddedildi
-  // ama gösterilen tek şey olumlu" gibi çelişkili bir görünüm oluşmaz.
-  function kararFaktorleri(payload) {
-    const faktorler = [];
-    if (Number(payload.BankruptcyHistory) === 1 || Number(payload.PreviousLoanDefaults) === 1) {
-      faktorler.push({ olumlu: false, metin: 'Geçmişte kredi temerrüdü veya iflas kaydı bulunuyor' });
-    } else {
-      faktorler.push({ olumlu: true, metin: 'Kredi temerrüdü veya iflas geçmişiniz yok' });
-    }
-    const dti = Number(payload.DebtToIncomeRatio);
-    if (!isNaN(dti)) {
-      if (dti <= 0.20) faktorler.push({ olumlu: true, metin: 'Borç/gelir oranınız sağlıklı seviyede' });
-      else if (dti >= 0.30) faktorler.push({ olumlu: false, metin: 'Borç/gelir oranınız ortalamanın üzerinde' });
-    }
-    const gelirYillik = Number(payload.AnnualIncome);
-    const tutar = Number(payload.LoanAmount);
-    if (gelirYillik > 0) {
-      const oran = tutar / gelirYillik;
-      if (oran <= 0.3) faktorler.push({ olumlu: true, metin: 'Talep edilen tutar gelirinize göre dengeli' });
-      else if (oran >= 0.45) faktorler.push({ olumlu: false, metin: 'Talep edilen tutar gelirinize göre yüksek' });
-    }
-    const skor = Number(payload.CreditScore);
-    if (!isNaN(skor)) {
-      if (skor >= 670) faktorler.push({ olumlu: true, metin: 'Kredi skorunuz güçlü seviyede' });
-      else if (skor < 630) faktorler.push({ olumlu: false, metin: 'Kredi skorunuz ortalamanın altında' });
-    }
-    const kkOran = Number(payload.CreditCardUtilizationRate);
-    if (!isNaN(kkOran)) {
-      if (kkOran <= 0.3) faktorler.push({ olumlu: true, metin: 'Kredi kartı kullanım oranınız düşük' });
-      else if (kkOran >= 0.5) faktorler.push({ olumlu: false, metin: 'Kredi kartı kullanım oranınız yüksek' });
-    }
-    const odemeGecmisi = Number(payload.PaymentHistory);
-    if (!isNaN(odemeGecmisi)) {
-      if (odemeGecmisi >= 35) faktorler.push({ olumlu: true, metin: 'Ödeme geçmişiniz güçlü' });
-      else if (odemeGecmisi < 20) faktorler.push({ olumlu: false, metin: 'Ödeme geçmişiniz sınırlı' });
-    }
-    const sorgu = Number(payload.NumberOfCreditInquiries);
-    if (!isNaN(sorgu)) {
-      if (sorgu >= 4) faktorler.push({ olumlu: false, metin: 'Son dönemde çok sayıda kredi sorgulamanız var' });
-      else if (sorgu <= 1) faktorler.push({ olumlu: true, metin: 'Kredi sorgulama sayınız düşük' });
-    }
-    const kredigeçmişi = Number(payload.LengthOfCreditHistory);
-    if (!isNaN(kredigeçmişi)) {
-      if (kredigeçmişi >= 7) faktorler.push({ olumlu: true, metin: 'Uzun bir kredi geçmişiniz var' });
-      else if (kredigeçmişi < 2) faktorler.push({ olumlu: false, metin: 'Kredi geçmişiniz kısa' });
-    }
-    if (payload.EmploymentStatus === 'Unemployed') {
-      faktorler.push({ olumlu: false, metin: 'İstihdam durumunuz risk oluşturuyor' });
-    }
-    if (payload.HomeOwnershipStatus === 'Own') {
-      faktorler.push({ olumlu: true, metin: 'Ev sahibi olmanız finansal istikrar göstergesi' });
-    }
-    const toplamVarlik = Number(payload.TotalAssets);
-    const toplamYukumluluk = Number(payload.TotalLiabilities);
-    if (toplamVarlik > 0) {
-      const oran = toplamYukumluluk / toplamVarlik;
-      if (oran <= 0.3) faktorler.push({ olumlu: true, metin: 'Varlık/borç dengeniz güçlü' });
-      else if (oran >= 0.6) faktorler.push({ olumlu: false, metin: 'Varlık/borç dengeniz zayıf' });
-    }
-    const tasarruf = Number(payload.SavingsAccountBalance);
-    const aylikBorc = Number(payload.MonthlyDebtPayments);
-    if (aylikBorc > 0) {
-      const ay = tasarruf / aylikBorc;
-      if (ay >= 6) faktorler.push({ olumlu: true, metin: 'Tasarruflarınız borç ödemelerinizi uzun süre karşılayabilir' });
-      else if (ay < 2) faktorler.push({ olumlu: false, metin: 'Tasarruflarınız borç ödemelerinize göre düşük' });
-    }
-    const acikHat = Number(payload.NumberOfOpenCreditLines);
-    if (!isNaN(acikHat) && acikHat >= 5) {
-      faktorler.push({ olumlu: false, metin: 'Açık kredi hattı sayınız yüksek' });
-    }
-    return faktorler;
-  }
-
-  function kararAciklamaHtml(payload, onaySonucu) {
-    if (!payload) return '';
-    const hepsi = kararFaktorleri(payload);
-    if (!hepsi.length) return '';
-    const isteneDurum = onaySonucu === 1;
-    const eslesenler = hepsi.filter(f => f.olumlu === isteneDurum);
-    const digerleri = hepsi.filter(f => f.olumlu !== isteneDurum);
-    let faktorler;
-    if (eslesenler.length === 0) {
-      // Girdilerin tek tek hiçbiri sonuçla aynı yönde çıkmadı — bunu gizlemek yerine
-      // dürüstçe belirtiyoruz: karar tek bir belirgin unsura değil, kombinasyona dayanıyor.
-      const yedekMetin = isteneDurum
-        ? 'Girdileriniz arasında tek başına baskın bir güçlü yön yok — karar, faktörlerin birleşimine dayanıyor.'
-        : 'Tek tek incelendiğinde belirgin bir risk yok — karar, faktörlerin birleşimine dayanıyor.';
-      faktorler = [{ notr: true, metin: yedekMetin }].concat(digerleri.slice(0, 2));
-    } else {
-      faktorler = eslesenler.concat(digerleri).slice(0, 3);
-    }
-    const satirlar = faktorler.map(f => {
-      const renk = f.notr ? '#D89A18' : (f.olumlu ? '#4AC5BB' : '#e0665a');
-      return `
-      <div style="display:flex; align-items:center; gap:8px; padding:6px 0;">
-        <span style="width:7px; height:7px; border-radius:50%; background:${renk}; flex-shrink:0;"></span>
-        <span style="font-size:12.5px; color:var(--text);">${f.metin}</span>
-      </div>`;
-    }).join('');
-    return `<div class="ml-odeme-baslik" style="margin-top:14px;">Bu karara etki eden başlıca unsurlar</div>
-      <div style="background:#0f221c; border-radius:10px; padding:4px 12px;">${satirlar}</div>`;
-  }
-
   function mlOneriHtml(oneri) {
     if (!oneri) {
       return `<div class="ml-odeme-baslik">Onay önerisi</div>
@@ -1731,7 +1622,7 @@
     </div>`;
   }
 
-  function openMlSonucModal(sonuc, payload) {
+  function openMlSonucModal(sonuc) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
 
@@ -1746,7 +1637,6 @@
           <div class="ml-stat ${riskRenkSinifi(sonuc.risk_bandi)}"><span>Risk skoru</span><b>${sonuc.risk_skoru}</b></div>
           <div class="ml-stat ${riskRenkSinifi(sonuc.risk_bandi)}"><span>Risk bandı</span><b>${sonuc.risk_bandi}</b></div>
         </div>
-        ${kararAciklamaHtml(payload, sonuc.onay)}
         <div class="ml-odeme-baslik">Örnek ödeme planı</div>
         <div class="ml-sonuc-grid">
           <div class="ml-stat"><span>Talep edilen tutar</span><b>${paraFormat(sonuc.odeme_plani.talep_edilen_tutar)}</b></div>
@@ -1810,7 +1700,7 @@
           body: JSON.stringify(veri),
         });
         const sonuc = await res.json();
-        openMlSonucModal(sonuc, veri);
+        openMlSonucModal(sonuc);
       } catch (err) {
         openMlSonucModal({ hata: 'Sunucuya bağlanılamadı, tekrar deneyin.' });
       }
