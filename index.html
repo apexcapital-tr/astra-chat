@@ -1664,6 +1664,24 @@
     if (payload.HomeOwnershipStatus === 'Own') {
       faktorler.push({ olumlu: true, metin: 'Ev sahibi olmanız finansal istikrar göstergesi' });
     }
+    const toplamVarlik = Number(payload.TotalAssets);
+    const toplamYukumluluk = Number(payload.TotalLiabilities);
+    if (toplamVarlik > 0) {
+      const oran = toplamYukumluluk / toplamVarlik;
+      if (oran <= 0.3) faktorler.push({ olumlu: true, metin: 'Varlık/borç dengeniz güçlü' });
+      else if (oran >= 0.6) faktorler.push({ olumlu: false, metin: 'Varlık/borç dengeniz zayıf' });
+    }
+    const tasarruf = Number(payload.SavingsAccountBalance);
+    const aylikBorc = Number(payload.MonthlyDebtPayments);
+    if (aylikBorc > 0) {
+      const ay = tasarruf / aylikBorc;
+      if (ay >= 6) faktorler.push({ olumlu: true, metin: 'Tasarruflarınız borç ödemelerinizi uzun süre karşılayabilir' });
+      else if (ay < 2) faktorler.push({ olumlu: false, metin: 'Tasarruflarınız borç ödemelerinize göre düşük' });
+    }
+    const acikHat = Number(payload.NumberOfOpenCreditLines);
+    if (!isNaN(acikHat) && acikHat >= 5) {
+      faktorler.push({ olumlu: false, metin: 'Açık kredi hattı sayınız yüksek' });
+    }
     return faktorler;
   }
 
@@ -1671,15 +1689,28 @@
     if (!payload) return '';
     const hepsi = kararFaktorleri(payload);
     if (!hepsi.length) return '';
-    const oncelik = onaySonucu === 1
-      ? hepsi.filter(f => f.olumlu).concat(hepsi.filter(f => !f.olumlu))
-      : hepsi.filter(f => !f.olumlu).concat(hepsi.filter(f => f.olumlu));
-    const faktorler = oncelik.slice(0, 3);
-    const satirlar = faktorler.map(f => `
+    const isteneDurum = onaySonucu === 1;
+    const eslesenler = hepsi.filter(f => f.olumlu === isteneDurum);
+    const digerleri = hepsi.filter(f => f.olumlu !== isteneDurum);
+    let faktorler;
+    if (eslesenler.length === 0) {
+      // Girdilerin tek tek hiçbiri sonuçla aynı yönde çıkmadı — bunu gizlemek yerine
+      // dürüstçe belirtiyoruz: karar tek bir belirgin unsura değil, kombinasyona dayanıyor.
+      const yedekMetin = isteneDurum
+        ? 'Girdileriniz arasında tek başına baskın bir güçlü yön yok — karar, faktörlerin birleşimine dayanıyor.'
+        : 'Tek tek incelendiğinde belirgin bir risk yok — karar, faktörlerin birleşimine dayanıyor.';
+      faktorler = [{ notr: true, metin: yedekMetin }].concat(digerleri.slice(0, 2));
+    } else {
+      faktorler = eslesenler.concat(digerleri).slice(0, 3);
+    }
+    const satirlar = faktorler.map(f => {
+      const renk = f.notr ? '#D89A18' : (f.olumlu ? '#4AC5BB' : '#e0665a');
+      return `
       <div style="display:flex; align-items:center; gap:8px; padding:6px 0;">
-        <span style="width:7px; height:7px; border-radius:50%; background:${f.olumlu ? '#4AC5BB' : '#e0665a'}; flex-shrink:0;"></span>
+        <span style="width:7px; height:7px; border-radius:50%; background:${renk}; flex-shrink:0;"></span>
         <span style="font-size:12.5px; color:var(--text);">${f.metin}</span>
-      </div>`).join('');
+      </div>`;
+    }).join('');
     return `<div class="ml-odeme-baslik" style="margin-top:14px;">Bu karara etki eden başlıca unsurlar</div>
       <div style="background:#0f221c; border-radius:10px; padding:4px 12px;">${satirlar}</div>`;
   }
